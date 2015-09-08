@@ -1,12 +1,13 @@
 import json
 import urllib2
 from glob import glob
+from datetime import datetime
 from elasticsearch import Elasticsearch, helpers
 
 
 def index_tweets():
   es = Elasticsearch(["http://mixednode1:9200"], use_ssl=False)
-  inputs = glob("filtered/*.json")
+  inputs = glob("filtered/*/*.json")
   print inputs
   for filename in inputs:
       print "going to index %s" % filename
@@ -20,8 +21,9 @@ def index_tweets():
           index_doc = []
           for doc in docs:
               #es.index(index="tweets", doc_type="opinion", id=doc["id"], body=doc)
-              i +=1     
-              index_doc.append({"_index":"tweets", "_type":"opinion", "id":doc["id"], "_source":doc})
+              i +=1    
+              doc["created_at"] = parse_date(doc["created_at"]) 
+              index_doc.append({"_index":"tweets", "_type":"tweet", "id":doc["id"], "_source":doc})
               if len(index_doc)==500:
                   print "indexing %s/%s" % (i, total)
                   helpers.bulk(es, index_doc)
@@ -33,6 +35,9 @@ def index_tweets():
            
         
       
+
+def parse_date(date_str):
+    return datetime.strptime(date_str, '%a %b %d %H:%M:%S +0000 %Y')
 
               
 

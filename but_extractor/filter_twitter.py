@@ -12,13 +12,14 @@ TWEET_FIELDS = {"id":str, "text":str, "lang":str, "created_at":datetime, "user":
 
 
 def filter_twitter_files():
-    inputs = glob("data/*.json")
+    inputs = glob("data/*/*.json")
     for filename in inputs:
         filter_file(filename)
 
 def filter_file(path):
     name = re.findall("\/([^\/]+.json)", path)[0]
-    print("Filtering " + name)
+    keyword = re.findall("\/([^\/]+)\/.+json", path)[0]
+    print("Filtering %s %s" %(keyword, name))
     filtered_tweets = []
     with open(path,'r') as input_file:
         input_json = input_file.read()
@@ -29,14 +30,17 @@ def filter_file(path):
         for tweet in data:
             if tweet['lang'] not in ALLOWED_LANGUAGES:
                 continue
-            filtered_tweet = filter_tweet(tweet)
+            filtered_tweet = filter_tweet(tweet, keyword)
             filtered_tweets.append(filtered_tweet)
-    with open('filtered/%s' % name, 'w') as output:
+    path = 'filtered/%s/%s' % (keyword, name)
+    with open(path, 'w') as output:
         output.write(json.dumps(filtered_tweets))
 
-def filter_tweet(tweet):
+def filter_tweet(tweet, keyword):
     filtered_tweet = {}
     filtered_tweet["id"] = tweet["id"]
+    filtered_tweet["keyword"] = keyword
+    filtered_tweet["project"] = keyword
     filtered_tweet["text"] = tweet["text"]
     filtered_tweet["lang"] = tweet["lang"]
     #filtered_tweet["created_at"] = parse_date(tweet["created_at"])
