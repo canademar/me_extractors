@@ -11,7 +11,7 @@ TWEET_FIELDS = {"id":str, "text":str, "lang":str, "created_at":datetime, "user":
 
 
 
-def main():
+def filter_twitter_files():
     inputs = glob("data/*.json")
     for filename in inputs:
         filter_file(filename)
@@ -73,4 +73,4 @@ def parse_date(date_str):
 
 
 if __name__=="__main__":
-    main()
+    filter_twitter_files()

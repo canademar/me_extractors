@@ -7,7 +7,7 @@ import os
 URL_FILE_LIST = "http://athena3.fit.vutbr.cz:8081/timestamp_all/%s"
 DOWNLOAD_FOLDER = "data/"
 
-def main():
+def download_new_files():
     old_files = glob.glob(DOWNLOAD_FOLDER + "*")
     file_list = get_file_list()
     print file_list
@@ -19,6 +19,7 @@ def main():
 
 def get_since_date():
     sorted_files = sorted(glob.glob(DOWNLOAD_FOLDER + "*"))
+    sorted_files.sort(key=os.path.getmtime)
     last = sorted_files[-1]
     since_date = re.findall("\/([^\/]+).json", last)[0]
     return since_date
@@ -27,7 +28,10 @@ def get_since_date():
 def save_file(url):
     response = requests.get(url)
     content = response.content
-    name = re.findall("\/([^\/]+.json)", url)[0]
+    date = re.findall("\/([^\/]+.json)", url)[0]
+    #http://athena3.fit.vutbr.cz:8001/Real_Madrid/2015-09-07/2015-09-07_09-16-
+    keyword = re.findall("8001\/([^\/]+)"), url)[0]
+    name = date +"__" +keyword
     print "Saving " + name
     with open(DOWNLOAD_FOLDER + name, 'w') as output:
         output.write(content)
@@ -36,6 +40,7 @@ def save_file(url):
 def get_file_list():
     since_date = get_since_date()
     print "Getting files from: %s" % since_date
+    raise
     response = requests.get(URL_FILE_LIST % since_date)
     content = response.content
     file_list = content.split("\n")
@@ -44,4 +49,4 @@ def get_file_list():
     
 
 if __name__ == "__main__":
-    main()
+    download_new_files()

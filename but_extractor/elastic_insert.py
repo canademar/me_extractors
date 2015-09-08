@@ -4,7 +4,7 @@ from glob import glob
 from elasticsearch import Elasticsearch, helpers
 
 
-def main():
+def index_tweets():
   es = Elasticsearch(["http://mixednode1:9200"], use_ssl=False)
   inputs = glob("filtered/*.json")
   print inputs
@@ -41,5 +41,5 @@ def main():
 
 
 if __name__ == '__main__':
-    main()
+    index_tweets()
 
