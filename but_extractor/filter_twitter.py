@@ -1,4 +1,5 @@
 #!/usr/bin/python
+import logging
 from glob import glob
 import json
 from datetime import datetime
@@ -19,12 +20,12 @@ def filter_twitter_files():
 def filter_file(path):
     name = re.findall("\/([^\/]+.json)", path)[0]
     keyword = re.findall("\/([^\/]+)\/.+json", path)[0]
-    print("Filtering %s %s" %(keyword, name))
+    logging.info("Filtering %s %s" %(keyword, name))
     filtered_tweets = []
     with open(path,'r') as input_file:
         input_json = input_file.read()
         if input_json[-2]==",":
-            print "Cleaning..."
+            logging.info("Cleaning...")
             input_json = input_json[:-2]+"]"
         data = json.loads(input_json)
         for tweet in data:
