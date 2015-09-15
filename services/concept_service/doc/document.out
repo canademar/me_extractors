@@ -1,9 +1,0 @@
-\BOOKMARK [1][-]{section.1}{Introduction and main NER concepts}{}% 1
-\BOOKMARK [1][-]{section.2}{NER as Tornado service}{}% 2
-\BOOKMARK [1][-]{section.3}{Gunicorn as scalable service}{}% 3
-\BOOKMARK [1][-]{section.4}{Monit}{}% 4
-\BOOKMARK [1][-]{section.5}{Continuous-Time Markov chains}{}% 5
-\BOOKMARK [1][-]{section.6}{Throttle system \(Paradigmalabs approach\)}{}% 6
-\BOOKMARK [1][-]{section.7}{Simulation to find paramaters \(, , , ...\) }{}% 7
-\BOOKMARK [1][-]{section.8}{Results}{}% 8
-\BOOKMARK [1][-]{section.9}{Conclusions}{}% 9
