@@ -6,6 +6,7 @@ from tornado.ioloop import IOLoop
 import logging
 import sys
 from urllib.parse import unquote_plus
+from example_taxonomy import taxonomy as example_taxonomy
 
 #from taxonomy_cache import TaxonomyCache
 from classification import Classificator
@@ -26,7 +27,7 @@ class ClassificationService(RequestHandler):
             taxonomy = json.loads(taxonomy)
         else:
             #taxonomy = self.cache.get_taxonomy(service_id, lang)
-            from example_taxonomy import taxonomy
+            taxonomy = example_taxonomy
         logging.debug(taxonomy)
         classification = self.classificator.classify(taxonomy, text)
         logging.debug(classification)
@@ -41,27 +42,16 @@ class ClassificationService(RequestHandler):
         logging.debug("Received POST request")
         for line in str(self.request.body, 'utf8').split('\n'):
             fields = line.split('\t')
-            if len(fields) == 4:
-                line_number = fields[0]
-                service_id = unquote_plus(unquote_plus(fields[1]))
-                lang = fields[2]
-                text = unquote_plus(unquote_plus(fields[3]))
-                logging.debug("Classificating %s" % text)
-                taxonomy = self.cache.get_taxonomy(service_id, lang)
-                classification = self.classificator.classify(taxonomy, text)
-                concepts = self.__format_post_classification(classification)
-                result = '\t'.join([line_number, service_id, lang, concepts])
-                logging.debug("Result is [%s]" % result)
-                results.append(result)
-            if len(fields) == 3:
-                line_number = fields[0]
-                taxonomy = json.loads(fields[1])
-                classification = self.classificator.classify(taxonomy, text)
-                concepts = self.__format_post_classification(classification)
-                result = '\t'.join([line_number, concepts])
-                results.append(result)
+            text = unquote_plus(unquote_plus(fields[0]))
+            logging.debug("Classificating %s" % text)
+            taxonomy = example_taxonomy
+            classification = self.classificator.classify(taxonomy, text)
+            concepts = self.__format_post_classification(classification)
+            result = '\t'.join([concepts] + fields)
+            logging.debug("Result is [%s]" % result)
+            results.append(result)
         for temp in results:
-            self.write('%s#@@#' % (temp))
+            self.write('%s\n' % (temp))
 
     def __get_concepts_from_classification(self, classification):
         unique_concepts = set()
@@ -76,7 +66,7 @@ class ClassificationService(RequestHandler):
         else:
             return 'N/A'
 
-print('Classification service started')
+print('Topic classification service started')
 
 app = Application([(r'/', ClassificationService)])
 app.listen(sys.argv[1])
