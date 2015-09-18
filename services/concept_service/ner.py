@@ -21,7 +21,8 @@ class Ner(object):
         # Calculate all possible overlays
         inlinks_processor = Inlinks(text, self.inlinks_threshold, self.concepts, self.stopwords, self.entities, False)
         # Return json repsonse
-        return inlinks_processor.process()
+        inlinks_response = inlinks_processor.process()
+        return inlinks_response
 
     def flatten(self , text):
         """

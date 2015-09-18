@@ -46,12 +46,14 @@ class ClassificationService(RequestHandler):
             logging.debug("Classificating %s" % text)
             taxonomy = example_taxonomy
             classification = self.classificator.classify(taxonomy, text)
-            concepts = self.__format_post_classification(classification)
-            result = '\t'.join([concepts] + fields)
-            logging.debug("Result is [%s]" % result)
+            #concepts = self.__format_post_classification(classification)
+            #result = '\t'.join([concepts] + fields)
+            #logging.debug("Result is [%s]" % result)
+            result = {"text":text, "topics":self.__get_concepts_from_classification(classification)}
             results.append(result)
-        for temp in results:
-            self.write('%s\n' % (temp))
+        #for temp in results:
+        #    self.write('%s\n' % (temp))
+        self.write({"response":results})
 
     def __get_concepts_from_classification(self, classification):
         unique_concepts = set()

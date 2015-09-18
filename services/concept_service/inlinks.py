@@ -188,8 +188,8 @@ class Inlinks(object):
         res['text']=self.text
         res['elapsed_time']=time.time() - start
         logging.info("Entities: '%s'" % res['results'].keys())
-        return json.dumps(res)
-        
+        #return json.dumps(res)
+        return res        
         
         
         

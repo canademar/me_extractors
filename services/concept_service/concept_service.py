@@ -46,12 +46,15 @@ class NerService(tornado.web.RequestHandler):
                 text = fields[0]
                 #concepts = self.__format_post_result(self.ner.fetch_entities(text))
                 concepts = self.ner.fetch_entities(text)
-                result_fields = [concepts] + fields
-                result = '\t'.join(result_fields)
-                results.append(result_fields)
+                print(concepts['results'])
+                #result_fields = [concepts] + fields
+                #result = '\t'.join(result_fields)
+                concept_names = list(concepts['results'].keys())
+                results.append({"text":text, "concepts":concept_names})
         #for temp in results:
         #    self.write('%s\n' % (temp))
-        self.write(result)
+        print(results)
+        self.write({"response":results})
 
     def __format_post_result(self, response):
         response_dict = json.loads(response)
@@ -62,6 +65,7 @@ class NerService(tornado.web.RequestHandler):
             return ""
         
 
+logging.basicConfig(stream=sys.stdout, level=logging.INFO)
 # data structures to load inside the data
 concepts_inlinks={}
 stopwords=set()
@@ -71,29 +75,26 @@ entities=set()
 MAX_WORDS = 400
 MAX_CHARS = MAX_WORDS * 50
 
-
-print("This is a NER service")
-
-logging.warning("Loading concepts...")
+logging.info("Loading concepts...")
 with(open('data/pagelinks_all.tsv', encoding='utf-8', errors='ignore')) as concepts_file:
     for concept in concepts_file.readlines():
         parts = concept.split('\t')
         concepts_inlinks[parts[0]]=parts[1]
-logging.warning("%s concepts loaded." % len(concepts_inlinks))
+logging.info("%s concepts loaded." % len(concepts_inlinks))
 
-logging.warning("Loading entities...")
-with(open('data/entities.txt', encoding='utf-8', errors='ignore')) as entities_file:
-    for entity in entities_file.readlines():
-        entities.add(entity[0:len(entity)-1])
-logging.warning("%s entities loaded." % len(entities))
+#logging.warning("Loading entities...")
+#with(open('data/entities.txt', encoding='utf-8', errors='ignore')) as entities_file:
+#    for entity in entities_file.readlines():
+#        entities.add(entity[0:len(entity)-1])
+#logging.warning("%s entities loaded." % len(entities))
 
-logging.warning("Loading stopwords...")
+logging.info("Loading stopwords...")
 with(open('data/stopwords.txt', encoding='utf-8', errors='ignore')) as sw_file:
     for sw in sw_file:
         stopwords.add(sw.replace('\n','').lower())
-logging.warning("%s stopwords loaded." % len(stopwords))
+logging.info("%s stopwords loaded." % len(stopwords))
 
-
+logging.info("Concept service Started")
 
 # run application
 app = tornado.web.Application([
