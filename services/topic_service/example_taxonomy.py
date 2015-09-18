@@ -63,5 +63,12 @@ taxonomy = {
  'fuera de juego': ['FUTBOL'],
  'corner': ['FUTBOL'],
  'balon': ['FUTBOL'],
- 'pelota': ['FUTBOL']
+ 'pelota': ['FUTBOL'],
+ 'vestuario': ['FUTBOL'],
+ 'petroleo': ['COMBUSTIBLE'],
+ 'gasolina': ['COMBUSTIBLE'],
+ 'diesel': ['COMBUSTIBLE'],
+ 'gasoleo': ['COMBUSTIBLE'],
+ 'gas': ['COMBUSTIBLE'],
+
 }

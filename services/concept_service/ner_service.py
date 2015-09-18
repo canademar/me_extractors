@@ -43,14 +43,13 @@ class NerService(tornado.web.RequestHandler):
         for line in str(self.request.body, 'utf8').split('\n'):
             if line: 
                 fields = line.split('\t')
-                line_number = fields[0]
-                service_id = fields[1]
-                text = fields[2]
+                text = fields[0]
                 concepts = self.__format_post_result(self.ner.fetch_entities(text))
-                result = '\t'.join([line_number, service_id, concepts])
+                result_fields = [concepts] + fields
+                result = '\t'.join(result_fields)
                 results.append(result)
         for temp in results:
-            self.write('%s#@@#' % (temp))
+            self.write('%s\n' % (temp))
 
     def __format_post_result(self, response):
         response_dict = json.loads(response)
@@ -58,7 +57,7 @@ class NerService(tornado.web.RequestHandler):
         if concepts:
             return ";;".join(concepts)
         else:
-            return ";;"
+            return ""
         
 
 # data structures to load inside the data
