@@ -24,19 +24,24 @@ class NerService(tornado.web.RequestHandler):
         inlinks_threshold = int(self.get_argument("inlinks_threshold", default=400))
         self.ner.inlinks_threshold=inlinks_threshold
         text = self.get_argument("text")
+        debug = self.get_argument("debug", default=False)
         # Check warnings if exists
         warning = []
         if len(text) > self.MAX_CHARS:
             warning.append('Only the first %d chars will be processed. This request is over this limit.' % self.MAX_CHARS)
         if  len(text.split(' ')) > self.MAX_WORDS:
             warning.append('Only the first %d words will be processed. This request is over this limit.' % self.MAX_WORDS)
-        result = json.loads(self.ner.fetch_entities(text))
+        #result = json.loads(self.ner.fetch_entities(text))
+        result = self.ner.fetch_entities(text)
         # Erase text at response
         del(result['text'])
         # if exists warning, append the flags to the output
         if len(warning) > 0:
             result['warnings'] = warning
-        self.write(result)
+        if debug:
+            self.write(result)
+        else:
+            self.write({"concepts": list(result["results"].keys())})
 
     def post(self):
         results = list()
