@@ -15,7 +15,7 @@ class ClassificationService(RequestHandler):
 
     def initialize(self):
         #self.cache = TaxonomyCache()
-        self.classificator = Classificator()
+        self.default_classificator = Classificator(example_taxonomy)
 
     def get(self):
         logging.debug("Received GET request")
@@ -25,11 +25,10 @@ class ClassificationService(RequestHandler):
         taxonomy = self.get_argument('taxonomy', default=None)
         if taxonomy:
             taxonomy = json.loads(taxonomy)
+            classificator = Classificator(taxonomy)
         else:
-            #taxonomy = self.cache.get_taxonomy(service_id, lang)
-            taxonomy = example_taxonomy
-        logging.debug(taxonomy)
-        classification = self.classificator.classify(taxonomy, text)
+            classificator = self.default_classificator
+        classification = classificator.classify(text)
         logging.debug(classification)
         result = self.__get_concepts_from_classification(classification)
         if result:
@@ -44,15 +43,9 @@ class ClassificationService(RequestHandler):
             fields = line.split('\t')
             text = unquote_plus(unquote_plus(fields[0]))
             logging.debug("Classificating %s" % text)
-            taxonomy = example_taxonomy
-            classification = self.classificator.classify(taxonomy, text)
-            #concepts = self.__format_post_classification(classification)
-            #result = '\t'.join([concepts] + fields)
-            #logging.debug("Result is [%s]" % result)
+            classification = self.default_classificator.classify(text)
             result = {"text":text, "topics":self.__get_concepts_from_classification(classification)}
             results.append(result)
-        #for temp in results:
-        #    self.write('%s\n' % (temp))
         self.write({"response":results})
 
     def __get_concepts_from_classification(self, classification):
