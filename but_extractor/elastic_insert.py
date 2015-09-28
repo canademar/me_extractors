@@ -14,6 +14,8 @@ def index_tweets():
       logging.info("going to index %s" % filename)
       with open(filename, 'r') as input:
           docs = json.loads(input.read())
+          if len(docs) == 0:
+              continue
           if es.exists(index="tweets",id=docs[0]["id"]):
               logging.info("Skipping")
               continue
@@ -24,7 +26,7 @@ def index_tweets():
               #es.index(index="tweets", doc_type="opinion", id=doc["id"], body=doc)
               i +=1    
               doc["created_at"] = parse_date(doc["created_at"]) 
-              index_doc.append({"_index":"tweets", "_type":"tweet", "id":doc["id"], "_source":doc})
+              index_doc.append({"_index":"tweets", "_type":"tweet", "_id":doc["id"], "_source":doc})
               if len(index_doc)==500:
                   logging.info("indexing %s/%s" % (i, total))
                   helpers.bulk(es, index_doc)

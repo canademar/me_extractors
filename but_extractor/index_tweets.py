@@ -31,6 +31,7 @@ def clean_filtered_data():
 
 if __name__ == "__main__":
     logging.basicConfig(level=logging.INFO, filename="but_tw_indexer.log", filemode="w")
+    #logging.basicConfig(level=logging.INFO, stream=sys.stdout)
     tracer = logging.getLogger('elasticsearch.trace')
     tracer.setLevel(logging.INFO)
 
