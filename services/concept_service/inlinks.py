@@ -13,6 +13,7 @@ try:
 except:
     # version 2.5
     import simplejson as json
+import logging
 
 class Inlinks(object):
     '''
@@ -121,6 +122,9 @@ class Inlinks(object):
             s=s.strip()
             # check if the substring has inlinks
             val=self.concepts_inlinks.get(s)
+            if val:
+                logging.debug("Substring: '%s'" % s)
+                logging.debug("Has inlinks: '%s'" % val.strip())
             composition=False
             #check composition of concepts
             if val==None and self.composition==True:
@@ -130,7 +134,10 @@ class Inlinks(object):
                     composition=True
                     val=aux_val
             #check the concept
+            if s in self.stopwords:
+                logging.debug("%s is a stopword" % s)
             if val!=None and s not in self.stopwords and int(val)>=self.inlink_threeshold and self.no_all_sw(s) and len(s)>1:
+                logging.debug("Concept not filtered: '%s'" % s)
                 self.left.append(left_position)
                 self.right.append(right_position)
                 is_entity=False
@@ -174,13 +181,15 @@ class Inlinks(object):
         while i<len(self.ws_array):
             self.process_substr(i,results)
             i+=1
+        logging.debug("Pre eliminate duplicates: Results:'%s'" % results)
         # eliminates duplicates
         self.eliminate_duplicates(results)
         res={'results':results}
         res['text']=self.text
         res['elapsed_time']=time.time() - start
-        return json.dumps(res)
-        
+        logging.debug("Entities: '%s'" % res['results'].keys())
+        #return json.dumps(res)
+        return res        
         
         
         

@@ -4,10 +4,10 @@ from commons import *
 
 class Classificator:
 
-    def __init__(self):
-        pass
+    def __init__(self, taxonomy):
+        self.taxonomy = taxonomy
 
-    def classify(self, taxonomy, text):
+    def classify(self, text):
         """ 
         Return those concepts that appear in text.
 
@@ -20,7 +20,7 @@ class Classificator:
         """
         if not text:
             return {}
-
+        taxonomy = self.taxonomy
         text = remove_accents(text.lower())
         concepts ={}
         
@@ -94,7 +94,7 @@ class Classificator:
         return concepts
 
 if __name__ == '__main__':
-    classif = Classificator()
     taxonomy = {'adsl' : ['telco'], 'tarifa plana': ['telco', 'otro concepto'],
                         'tarifa' : ['telco']}
-    print(classif.classify(taxonomy, 'la tarifa plana de movistar es mejor que el adsl'))
+    classif = Classificator(taxonomy)
+    print(classif.classify('la tarifa plana de movistar es mejor que el adsl'))

@@ -11,13 +11,13 @@ function start() {
     do
         port=$(( $BASE_PORT + $i ));
         echo "Starting instance in port $port"
-        nohup python3 classification_service.py $port > logs/classification.$port.log 2>&1 &
+        nohup python3 topic_service.py $port > logs/topic_service.$port.log 2>&1 &
         i=$(( $i + 1 ))
     done
 }
 
 function stop() {
-    ps -ef | grep "classification_service" | grep -v grep | awk '{print $2}'| xargs kill -9
+    ps -ef | grep "topic_service" | grep -v grep | awk '{print $2}'| xargs kill -9
 }
 
 
