@@ -1,5 +1,6 @@
 #!/usr/bin/python
 import logging
+import sys
 from glob import glob
 import json
 from datetime import datetime
@@ -27,6 +28,9 @@ def filter_file(path):
         if input_json[-2]==",":
             logging.info("Cleaning...")
             input_json = input_json[:-2]+"]"
+        if input_json[-1]==",":
+            logging.info("Cleaning...")
+            input_json = input_json[:-1]+"]"
         data = json.loads(input_json)
         for tweet in data:
             if tweet['lang'] not in ALLOWED_LANGUAGES:
@@ -78,4 +82,5 @@ def parse_date(date_str):
 
 
 if __name__=="__main__":
+    logging.basicConfig(level=logging.INFO, stream=sys.stdout) 
     filter_twitter_files()
