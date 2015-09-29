@@ -1,6 +1,6 @@
 #General
 *.bak
-
+nohup.out
 #Java
 *.class
 *.log
