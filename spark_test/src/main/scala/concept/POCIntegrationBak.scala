@@ -1,24 +1,23 @@
+package concept
+
 import java.net.URL
 
-import org.apache.spark.{SparkFiles, SparkContext, SparkConf}
+import org.apache.spark.{SparkConf, SparkContext}
+import org.json4s.JsonDSL._
+import org.json4s._
+import org.json4s.jackson.JsonMethods._
+import org.json4s.jackson.Serialization
+import org.json4s.jackson.Serialization.write
 import topic.SparkTopicExtractor
 
 import scala.io.Source
 import scala.util.parsing.json.JSON
 
-import concept.BasicConceptExtractorNoSerializable
-
-import org.json4s._
-import org.json4s.JsonDSL._
-import org.json4s.jackson.JsonMethods._
-import org.json4s.jackson.Serialization
-import org.json4s.jackson.Serialization.{read, write}
-
 
 /**
  * Created by cnavarro on 22/10/15.
  */
-object POCIntegration {
+object POCIntegrationBak {
   implicit val formats = Serialization.formats(NoTypeHints)
 
   def flattenByText(map :Map[String,Any]): List[Map[String,Any]] ={
@@ -33,18 +32,6 @@ object POCIntegration {
     (lines).map { case line => line+(("concepts",conceptExtractor.extractConcepts(line.getOrElse("text","").asInstanceOf[String])))  }
 
   }
-
-  def calculateLength(input: String): String = {
-    val jsonSomeInput = JSON.parseFull(input).asInstanceOf[Some[Map[String,Any]]]
-    val jsonInput = jsonSomeInput.getOrElse(Map())
-    val text = jsonInput.getOrElse("text", "").asInstanceOf[String]
-    val length = text.length
-    val outputJson = jsonInput+(("length",length))
-    val output = write(outputJson)
-    output
-
-  }
-
 
   /*
    * Extract input data from ES (optional)
@@ -102,11 +89,7 @@ object POCIntegration {
     println("Couuuuuuuuunts: "+ firstCount)
     println("Counts class:" + firstCount.getClass())
     println("Parsed " + parse(firstCount))
-    println("Parsed " + JSON.parseFull(firstCount).asInstanceOf[Some[Map[String,Any]]] )
-    //val mapCounts = conceptJsons.map(entry =>JSON.parseFull(entry).asInstanceOf[Some[Map[String,Any]]]  )
-    val lengths = counts.map(entry=>calculateLength(entry))
-    println("Lengths: " + lengths.first)
-
+    println("fullParse " + JSON.parseFull(firstCount).asInstanceOf[Some[Map[String,Any]]])
 
 
 

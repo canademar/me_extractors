@@ -23,8 +23,6 @@ class SparkTopicExtractor(taxonomy: Map[String,List[String]]) extends Serializab
     var resultTopics =  scala.collection.mutable.Set[String]()
     for((key,topics) <- taxonomy){
       if(lowerText.contains(key)) {
-        println(topics)
-        println(topics.getClass)
         for (topic <- topics) {
           resultTopics += topic
         }

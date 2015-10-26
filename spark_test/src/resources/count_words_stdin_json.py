@@ -5,6 +5,7 @@ import json
 
 def count_words(json_input):
     doc = json.loads(json_input)
+    raise Exception("doc: %s, %s" % (type(doc), doc))
     text = doc["text"]
     parts = text.split(" ")
     doc["count"] = len(parts)
