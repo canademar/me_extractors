@@ -4,7 +4,7 @@ require 'json'
 require '/home/cnavarro/workspace/mixedemotions/me_extractors/spark_test/src/resources/dependency'
 
 def count_words(json_input)
-  json_input = eval(json_input)
+  #json_input = eval(json_input)
   doc = JSON.load(json_input)
   text = doc["text"]
   parts = text.split(" ")

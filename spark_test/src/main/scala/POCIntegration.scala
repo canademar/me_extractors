@@ -45,6 +45,10 @@ object POCIntegration {
 
   }
 
+  def cleanJsonOutput(input: JValue): String = {
+    input.toString.replaceAll("""JString\(""","").replaceAll("""\)$""","")
+  }
+
 
   /*
    * Extract input data from ES (optional)
@@ -65,7 +69,7 @@ object POCIntegration {
     val e2 = exampleInput.getOrElse(Map())
 
     val hits = e2.getOrElse("hits",Map()).asInstanceOf[Map[String,Any]]
-    println(hits.getClass)
+
     val docs = hits.getOrElse("hits", List(Map())).asInstanceOf[List[Map[String,Any]]]
 
 
@@ -82,9 +86,9 @@ object POCIntegration {
     //for(source<-parallelDocs.collect()){
     //  println("Doc:" + source)
     //}
-    print(topicMaps.first())
+    println(topicMaps.first())
     val conceptMaps = topicMaps.mapPartitions(extractConcepts)
-    print(conceptMaps.first())
+    println(conceptMaps.first())
 
     /*val distScript = "./src/resources/count_words_stdin_json.rb"
     val distScriptName = "count_words_stdin_json.rb"
@@ -97,19 +101,37 @@ object POCIntegration {
 
     //val counts = conceptJsons.pipe(SparkFiles.get(distScriptName))
     val counts = conceptJsons.pipe("ruby /home/cnavarro/workspace/mixedemotions/me_extractors/spark_test/src/resources/count_words_stdin_json.rb")
+    /*println("Whaaaaaaaaaaaaaaaaat uppppppppppppppppppppppppppp")
+    val jsonToWrite = flatParallelDocs.map(_.getOrElse("text","")).pipe("tee /home/cnavarro/workspace/mixedemotions/me_extractors/spark_test/src/resources/tee_hee.txt")
+    jsonToWrite.collect()*/
 
     val firstCount = counts.first()
     println("Couuuuuuuuunts: "+ firstCount)
     println("Counts class:" + firstCount.getClass())
     println("Parsed " + parse(firstCount))
     println("Parsed " + JSON.parseFull(firstCount).asInstanceOf[Some[Map[String,Any]]] )
-    //val mapCounts = conceptJsons.map(entry =>JSON.parseFull(entry).asInstanceOf[Some[Map[String,Any]]]  )
+
     val lengths = counts.map(entry=>calculateLength(entry))
     println("Lengths: " + lengths.first)
 
 
+    //val mapCounts = conceptJsons.map(entry =>JSON.parseFull(entry).asInstanceOf[Some[Map[String,Any]]])
+    val mapCounts = conceptJsons.map(entry =>parse(entry))
+    val oneJson = mapCounts.first()
+    println(oneJson)
+
+    println("Whaaaaaaaaaaaaaaaaat uppppppppppppppppppppppppppp")
+    val jsonToWrite = mapCounts.map(cleanJsonOutput(_)).pipe("tee /home/cnavarro/workspace/mixedemotions/me_extractors/spark_test/src/resources/tee_hee.txt")
+    jsonToWrite.collect()
+    val str = mapCounts.first.toString
+    //val cleanStr = str.replaceAll("""JString\(""","").replaceAll("""\)$""","")
+    val cleanStr = cleanJsonOutput(mapCounts.first)
 
 
+    println(cleanStr)
+
+     val counts2 = mapCounts.map(cleanJsonOutput(_)).pipe("python /home/cnavarro/workspace/mixedemotions/me_extractors/spark_test/src/resources/count_words_stdin_json.py")
+    println(counts2.first())
 
 
 

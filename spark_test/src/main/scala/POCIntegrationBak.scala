@@ -1,7 +1,6 @@
-package concept
-
 import java.net.URL
 
+import concept.BasicConceptExtractorNoSerializable
 import org.apache.spark.{SparkConf, SparkContext}
 import org.json4s.JsonDSL._
 import org.json4s._
