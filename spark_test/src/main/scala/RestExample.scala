@@ -1,10 +1,7 @@
-package topic
-
 import org.apache.spark.rdd.RDD
-import org.apache.spark.{SparkContext, SparkConf}
+import org.apache.spark.{SparkConf, SparkContext}
 
-import _root_.scalaj.http.HttpResponse
-import scalaj.http._
+import scalaj.http.{HttpResponse, _}
 
 object RestExample {
 
