@@ -26,9 +26,10 @@ class BasicConceptExtractor(taxonomy: Map[String, Int], inlinks_threshold: Int, 
     val words = clean_text.split("""[\s\.\n"',()]""")
     while(start+length<words.length){
       length = 1
-      while(length<=window_max_length) {
+      while(length<=window_max_length && length<=(words.length-start)) {
         val phrase = words.slice(start, start + length).mkString(" ")
         logger.info(phrase)
+        println("Phrase: " + phrase + " -- start: "+start + " length: "+ length)
         taxonomy.get(phrase) match {
           case Some(i: Int) => {
             if (i > inlinks_threshold) {
@@ -44,6 +45,14 @@ class BasicConceptExtractor(taxonomy: Map[String, Int], inlinks_threshold: Int, 
         length += 1
       }
       start += 1
+      length = 1
+    }
+    for(concept<-concepts){
+      for(otherConcept<-concepts){
+        if(concept!=otherConcept & (concept contains otherConcept)){
+          concepts.-(otherConcept)
+        }
+      }
     }
     concepts.toSet
   }
@@ -80,10 +89,10 @@ object BasicConceptExtractor{
   }
 
   def main (args: Array[String]) {
-    //val conceptExtractor = new concept.BasicConceptExtractor("/home/cnavarro/workspace/mixedemotions/spark_test/src/resources/small_taxonomy.tsv")
+    val conceptExtractor = new concept.BasicConceptExtractor("/home/cnavarro/workspace/mixedemotions/me_extractors/spark_test/src/resources/small_taxonomy.tsv")
     //val text = Source.fromFile("/home/cnavarro/workspace/mixedemotions/spark_test/src/resources/volkswagen.txt").getLines().mkString(" ")
-    //val topics = conceptExtractor.extractConcepts(text)
-    //println("String :" + topics.mkString)
+    val topics = conceptExtractor.extractConcepts("no volkswagen Que pasa con soria bale tudo")
+    println("String: " + topics.mkString(","))
   }
 
 }

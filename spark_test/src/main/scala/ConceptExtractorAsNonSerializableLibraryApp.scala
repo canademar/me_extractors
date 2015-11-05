@@ -19,7 +19,7 @@ object ConceptExtractorAsNonSerializableLibraryApp {
 
 
   def main(args: Array[String]) {
-    val conceptExtractor = new BasicConceptExtractorNoSerializable("/home/cnavarro/workspace/mixedemotions/spark_test/src/resources/small_taxonomy.tsv")
+    //val conceptExtractor = new BasicConceptExtractorNoSerializable("/home/cnavarro/workspace/mixedemotions/spark_test/src/resources/small_taxonomy.tsv")
     val textFile = "/home/cnavarro/workspace/mixedemotions/spark_test/src/resources/volkswagen.txt"
 
     val conf = new SparkConf().setAppName("External Classificator Application")
