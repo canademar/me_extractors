@@ -34,6 +34,20 @@ object POCIntegration {
 
   }
 
+  def extractConceptsJson(lines: Iterator[String]): Iterator[String] = {
+    val conceptExtractor = new BasicConceptExtractorNoSerializable("/home/cnavarro/workspace/mixedemotions/me_extractors/spark_test/src/resources/small_taxonomy.tsv")
+    //    var result = new mutable.MutableList[Map[String, Any]]()
+    //(lines).map { case line => Map("line" -> line, "concepts" -> conceptExtractor.extractConcepts(line.getOrElse("text","").asInstanceOf[String])) }
+    val mapLines = lines.map(line=>line.map(entry=>JSON.parseFull(line).asInstanceOf[Some[Map[String,Any]]].get))
+    for(line<-lines) yield {
+      val lineMap = JSON.parseFull(line).asInstanceOf[Some[Map[String,Any]]].get
+      val resultMap = lineMap + (("concepts",lineMap.getOrElse("text","").asInstanceOf[String]))
+      write(resultMap)
+    }
+
+
+  }
+
   def calculateLength(input: String): String = {
     val jsonSomeInput = JSON.parseFull(input).asInstanceOf[Some[Map[String,Any]]]
     val jsonInput = jsonSomeInput.getOrElse(Map())
@@ -79,29 +93,34 @@ object POCIntegration {
     val taxonomy_url = new URL("file:///home/cnavarro/workspace/mixedemotions/me_extractors/spark_test/src/resources/example_taxonomy.json")
     val topicExtractor = new SparkTopicExtractor(taxonomy_url)
     val flatParallelDocs = parallelDocs.flatMap(element=>flattenByText(element))
-    val topicMaps = topicExtractor.extractTopicsFromRDD(flatParallelDocs)
+    val jsonParallelDocs = flatParallelDocs.map(write(_))
+    val topicMaps = topicExtractor.extractTopicsFromRDD(jsonParallelDocs)
+
+    println("Going to show topics first-----------------")
+    println("Topic first: " +  topicMaps.first)
+
 
 
     //MapPartitions (non-serializable approach)
-    val conceptMaps = topicMaps.mapPartitions(extractConcepts)
-    println(conceptMaps.first())
+    val conceptMaps = topicMaps.mapPartitions(extractConceptsJson)
+    println("Concepts first" + conceptMaps.first())
 
 
-    /*val distScript = "./src/resources/count_words_stdin_json.rb"
+    val distScript = "./src/resources/count_words_stdin_json.rb"
     val distScriptName = "count_words_stdin_json.rb"
     sc.addFile(distScript)
-    val distDependency = "./src/resources/dependency.rb"
+    /*val distDependency = "./src/resources/dependency.rb"
     sc.addFile(distDependency)*/
 
     //val conceptJsons = conceptMaps.map(entry=>compact(write(entry)))
-    val conceptJsons = conceptMaps.map(entry=>write(entry))
-    println(conceptJsons.first())
+    //val conceptJsons = conceptMaps.map(entry=>write(entry))
+    //println(conceptJsons.first())
 
 
 
-    //val counts = conceptJsons.pipe(SparkFiles.get(distScriptName))
-    conceptJsons.pipe("tee /home/cnavarro/workspace/mixedemotions/me_extractors/spark_test/src/resources/tee_hee.txt").collect()
-    val counts = conceptJsons.pipe("ruby /home/cnavarro/workspace/mixedemotions/me_extractors/spark_test/src/resources/count_words_stdin_json.rb")
+    val counts = conceptMaps.pipe(SparkFiles.get(distScriptName))
+    //conceptJsons.pipe("tee /home/cnavarro/workspace/mixedemotions/me_extractors/spark_test/src/resources/tee_hee.txt").collect()
+    //val counts = conceptJsons.pipe("ruby /home/cnavarro/workspace/mixedemotions/me_extractors/spark_test/src/resources/count_words_stdin_json.rb")
     /*println("Whaaaaaaaaaaaaaaaaat uppppppppppppppppppppppppppp")
     val jsonToWrite = flatParallelDocs.map(_.getOrElse("text","")).pipe("tee /home/cnavarro/workspace/mixedemotions/me_extractors/spark_test/src/resources/tee_hee.txt")
     jsonToWrite.collect()*/
@@ -130,19 +149,7 @@ object POCIntegration {
     println("One json " + oneJson)
     println(oneJson \\ "text")
 
-    /*
-    val jsonToWrite = mapCounts.map(cleanJsonOutput(_)).pipe("tee /home/cnavarro/workspace/mixedemotions/me_extractors/spark_test/src/resources/tee_hee.txt")
-    jsonToWrite.collect()
-    val str = mapCounts.first.toString
-    val cleanStr = cleanJsonOutput(mapCounts.first)
 
-
-    println(cleanStr)
-
-
-     val counts2 = mapCounts.map(cleanJsonOutput(_)).pipe("python /home/cnavarro/workspace/mixedemotions/me_extractors/spark_test/src/resources/count_words_stdin_json.py")
-    println(counts2.first())
-    */
 
 
 
