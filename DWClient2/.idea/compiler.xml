@@ -22,10 +22,12 @@
         <sourceTestOutputDir name="target/generated-test-sources/test-annotations" />
         <outputRelativeToContentRoot value="true" />
         <processorPath useClasspath="true" />
+        <module name="DeutscheWelleClient" />
         <module name="DWClient2" />
       </profile>
     </annotationProcessing>
     <bytecodeTargetLevel>
+      <module name="DeutscheWelleClient" target="1.5" />
       <module name="DWClient2" target="1.5" />
     </bytecodeTargetLevel>
   </component>
