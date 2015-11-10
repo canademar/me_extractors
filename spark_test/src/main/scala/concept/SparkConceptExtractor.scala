@@ -1,9 +1,17 @@
 package concept
 
 import java.text.Normalizer
+import scala.util.parsing.json.JSON
 
 import org.apache.spark.{SparkContext, SparkConf}
 import org.apache.spark.rdd.RDD
+
+
+import org.json4s._
+import org.json4s.JsonDSL._
+import org.json4s.jackson.JsonMethods._
+import org.json4s.jackson.Serialization
+import org.json4s.jackson.Serialization.{read, write}
 
 /**
  * Created by cnavarro on 26/10/15.
@@ -60,6 +68,15 @@ class SparkConceptExtractor (taxonomy: Map[String, Int], inlinks_threshold: Int,
 
   }
 
+  def extractConceptsJson(input: RDD[String]): RDD[String] = {
+    val optionMaps = input.map(entry=>JSON.parseFull(entry).asInstanceOf[Some[Map[String,String]]])
+
+    val maps = optionMaps.map(_.get)
+    val results = maps.map(entry=>entry +(("concepts", extractConceptForEntry(entry.getOrElse("text","")))))
+
+    results.mapPartitions(entry=>SparkConceptExtractor.convertToJson(entry))
+  }
+
 
 
 }
@@ -90,6 +107,13 @@ object SparkConceptExtractor{
       println(conceptMap)
     }
     println("You have failed me")
+  }
+
+  def convertToJson(lines: Iterator[Map[String, Any]]): Iterator[String] = {
+    implicit val formats = Serialization.formats(NoTypeHints)
+    for (line <- lines) yield {
+      write(line)
+    }
   }
 
 
