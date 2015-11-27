@@ -38,10 +38,10 @@ object POCIntegration {
     val conceptExtractor = new BasicConceptExtractorNoSerializable("/home/cnavarro/workspace/mixedemotions/me_extractors/spark_test/src/resources/small_taxonomy.tsv")
     //    var result = new mutable.MutableList[Map[String, Any]]()
     //(lines).map { case line => Map("line" -> line, "concepts" -> conceptExtractor.extractConcepts(line.getOrElse("text","").asInstanceOf[String])) }
-    val mapLines = lines.map(line=>line.map(entry=>JSON.parseFull(line).asInstanceOf[Some[Map[String,Any]]].get))
+    //val mapLines = lines.map(line=>line.map(entry=>JSON.parseFull(line).asInstanceOf[Some[Map[String,Any]]].get))
     for(line<-lines) yield {
       val lineMap = JSON.parseFull(line).asInstanceOf[Some[Map[String,Any]]].get
-      val resultMap = lineMap + (("concepts",lineMap.getOrElse("text","").asInstanceOf[String]))
+      val resultMap = lineMap + (("concepts",conceptExtractor.extractConcepts(lineMap.getOrElse("text","").asInstanceOf[String])))
       write(resultMap)
     }
 
