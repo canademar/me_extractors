@@ -1,0 +1,13 @@
+<component name="libraryTable">
+  <library name="SBT: com.sksamuel.elastic4s:elastic4s-streams_2.10:1.7.1:jar">
+    <CLASSES>
+      <root url="jar://$USER_HOME$/.ivy2/cache/com.sksamuel.elastic4s/elastic4s-streams_2.10/jars/elastic4s-streams_2.10-1.7.1.jar!/" />
+    </CLASSES>
+    <JAVADOC>
+      <root url="jar://$USER_HOME$/.ivy2/cache/com.sksamuel.elastic4s/elastic4s-streams_2.10/docs/elastic4s-streams_2.10-1.7.1-javadoc.jar!/" />
+    </JAVADOC>
+    <SOURCES>
+      <root url="jar://$USER_HOME$/.ivy2/cache/com.sksamuel.elastic4s/elastic4s-streams_2.10/srcs/elastic4s-streams_2.10-1.7.1-sources.jar!/" />
+    </SOURCES>
+  </library>
+</component>
