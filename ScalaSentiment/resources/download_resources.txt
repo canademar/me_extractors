@@ -1,0 +1,1 @@
+wget http://mixedadmin/repository/sentiment_resources.tar.gz
