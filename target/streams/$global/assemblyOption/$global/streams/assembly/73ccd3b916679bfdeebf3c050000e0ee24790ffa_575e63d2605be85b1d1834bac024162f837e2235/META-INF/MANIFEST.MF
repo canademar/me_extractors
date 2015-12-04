@@ -1,0 +1,14 @@
+Manifest-Version: 1.0
+Built-By: DreamSweet
+Build-Jdk: 1.7.0_75
+Class-Path: guava-14.0.1.jar slf4j-api-1.7.2.jar tachyon-common-0.7.1.
+ jar commons-lang-2.4.jar commons-io-2.4.jar netty-all-4.0.28.Final.ja
+ r commons-lang3-3.0.jar curator-framework-2.1.0-incubating.jar zookee
+ per-3.4.5.jar slf4j-log4j12-1.7.2.jar log4j-1.2.15.jar mail-1.4.jar a
+ ctivation-1.1.jar jline-0.9.94.jar netty-3.2.2.Final.jar curator-clie
+ nt-2.1.0-incubating.jar curator-recipes-2.1.0-incubating.jar libthrif
+ t-0.9.1.jar httpclient-4.2.5.jar commons-logging-1.1.1.jar commons-co
+ dec-1.6.jar httpcore-4.2.4.jar
+Created-By: Apache Maven 3.2.5
+Archiver-Version: Plexus Archiver
+

@@ -1,0 +1,19 @@
+Manifest-Version: 1.0
+Built-By: DreamSweet
+Build-Jdk: 1.7.0_75
+Class-Path: guava-14.0.1.jar commons-lang3-3.0.jar hadoop-client-1.0.4
+ .jar hadoop-core-1.0.4.jar xmlenc-0.52.jar commons-codec-1.4.jar comm
+ ons-math-2.1.jar commons-configuration-1.6.jar commons-collections-3.
+ 2.1.jar commons-logging-1.1.1.jar commons-digester-1.8.jar commons-be
+ anutils-1.7.0.jar commons-beanutils-core-1.8.0.jar commons-net-1.4.1.
+ jar commons-el-1.0.jar hsqldb-1.8.0.10.jar oro-2.0.8.jar jackson-mapp
+ er-asl-1.0.1.jar jackson-core-asl-1.0.1.jar slf4j-api-1.7.2.jar tachy
+ on-common-0.7.1.jar commons-lang-2.4.jar commons-io-2.4.jar netty-all
+ -4.0.28.Final.jar curator-framework-2.1.0-incubating.jar zookeeper-3.
+ 4.5.jar slf4j-log4j12-1.7.2.jar log4j-1.2.15.jar mail-1.4.jar activat
+ ion-1.1.jar jline-0.9.94.jar netty-3.2.2.Final.jar curator-client-2.1
+ .0-incubating.jar curator-recipes-2.1.0-incubating.jar libthrift-0.9.
+ 1.jar httpclient-4.2.5.jar httpcore-4.2.4.jar
+Created-By: Apache Maven 3.2.5
+Archiver-Version: Plexus Archiver
+
