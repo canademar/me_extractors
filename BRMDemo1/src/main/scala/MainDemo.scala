@@ -20,7 +20,8 @@ object MainDemo {
   val ip_host = "192.168.1.12" // Private IP address of the elasticsearch node
   val cluster_name = "elasticsearch" // Name of the Elasticsearch cluster
   val es_index = "tweets" // Name of the source index
-  val lang = "es" // Language of the documents to be retrieved
+  //val lang = "en" // Language of the documents to be retrieved
+  val lang = "(es OR en)" // Language of the documents to be retrieved
 
   def main (args: Array[String]) {
 
@@ -39,15 +40,21 @@ object MainDemo {
 
     var i = 0
 
+    println("*** Quering Elasticsearch")
+
     while(z == 0) {
       // 1. Loading data from ES
 
+      val elastic_query = "keyword:BBVA AND lang:" + lang
+      println(elastic_query)
       val resp = client.execute {
-        search in es_index / "tweet" query "keyword:BBVA AND lang:" + lang limit 5000 start 5000*i
+        search in es_index / "tweet" query elastic_query limit 5000 start 5000*i
       }.await // don't block in real code
 
-      if (resp.getHits.getHits.size <= 0)
+      if (resp.getHits.getHits.size <= 0) {
         z = 1
+      }
+
 
       val arrayData = JSON.parseFull(resp.toString).asInstanceOf[Some[Map[String, Any]]].getOrElse(Map[String, Any]())
         .get("hits").asInstanceOf[Some[Map[String, Any]]].getOrElse(Map[String, Any]()).get("hits")
@@ -70,6 +77,7 @@ object MainDemo {
     // 2.1. Processing the RDD with a NLP functionality implemented on Spark
 
     ////////////// TOPIC EXTRACTION (SPARK METHOD) ////////////////
+    println("*** Topic Extraction")
 
     val mySparkTopicExtractor = new SparkTopicExtractor(new URL("http://136.243.53.81/repository/example_taxonomy.json"))
 
@@ -77,21 +85,35 @@ object MainDemo {
 
     ////////////// CONCEPT EXTRACTION (SPARK METHOD) ////////////////
 
+    println("*** Concept Extraction")
+
     val tax = parseTaxonomy(sc, "hdfs://192.168.1.13:8020/user/stratio/resources/pagelinks_all.tsv")
     //val tax = parseTaxonomy(sc, "/home/jvmarcos/Escritorio/pagelinks_all.tsv") // Loading from local source
 
     val conceptExtractor = new SparkConceptExtractor(tax, 400, 10)
 
-    val finalResultString = conceptExtractor.extractConceptsFromRDD(jsonResultTopic)
+    val conceptResultString = conceptExtractor.extractConceptsFromRDD(jsonResultTopic)
 
-    val finalResultMap = finalResultString.map(x=> JSON.parseFull(x).asInstanceOf[Some[Map[String,Any]]].getOrElse
+    ////Sentiment Extraction
+
+    println("*** Sentiment Extraction")
+
+    val sentimentResultsString = SparkSentiment.extractSentimentFromRDD(conceptResultString)
+
+
+
+    val finalResultMap = sentimentResultsString.map(x=> JSON.parseFull(x).asInstanceOf[Some[Map[String,Any]]].getOrElse
       (Map[String, Any]()).get("_source").asInstanceOf[Some[Map[String,Any]]].get)
 
-    val example = finalResultString.first()
+    val example = sentimentResultsString.first()
 
-    println(example)
+    println("Example: "+ example)
+
+    println("FinalResult: "+ finalResultMap.first())
 
     // 3. Writing documents in the database
+
+    println("*** Persisting in ES " + finalResultMap.count())
 
     finalResultMap.foreachPartition( x => {
 
@@ -105,7 +127,7 @@ object MainDemo {
 
         val resp2 = client2.execute {
           index into "myanalyzed" / "tweet" fields(
-            "lang" -> lang,
+            "lang" -> record.getOrElse("lang", "").asInstanceOf[String],
             "screen_name" -> record.getOrElse("screen_name", "").asInstanceOf[String],
             "keyword" -> record.getOrElse("keyword", "").asInstanceOf[String],
             "text" -> record.getOrElse("text", "").asInstanceOf[String],
@@ -115,7 +137,9 @@ object MainDemo {
             "project" -> record.getOrElse("project", "").asInstanceOf[String],
             "concepts" -> record.getOrElse("concepts", "").asInstanceOf[List[String]].toArray,
             "mentions" -> record.getOrElse("mentions", "").asInstanceOf[List[String]].toArray,
+            "sentiment" -> record.getOrElse("sentiment", "").asInstanceOf[String],
             "id" -> record.getOrElse("id", "").asInstanceOf[Double]
+
             ) id record.getOrElse("id", "").asInstanceOf[Double]
         }.await // don't block in real code
       }

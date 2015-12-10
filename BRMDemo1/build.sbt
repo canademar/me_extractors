@@ -1,4 +1,4 @@
-name := "BRMDemo1"
+name := "BRMDemo2"
 
 version := "1.0"
 
