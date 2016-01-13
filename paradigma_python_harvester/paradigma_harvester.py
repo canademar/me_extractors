@@ -1,4 +1,6 @@
+import sys
 import time
+from datetime import datetime, timedelta
 import json
 import pysolr
 from hdfs import InsecureClient
@@ -22,8 +24,9 @@ def query_solr(query, start_time, end_time, page_start=0, page_limit=None):
     i = page_start    
     while(len(results)<MAX_RESULTS):
         start = i*PAGE_SIZE
-        response = solr.search("%s AND created_at:[%s TO %s]" % (query, start_time, end_time),
-                               **{'rows':PAGE_SIZE, 'start':start})
+        full_query = "%s AND created_at:[%s TO %s]" % (query, start_time, end_time)
+        print("Query %s" % full_query)
+        response = solr.search(full_query, **{'rows':PAGE_SIZE, 'start':start})
         print("Hits: %s" % response.hits)
         rows = response.docs
         results += rows
@@ -35,15 +38,8 @@ def query_solr(query, start_time, end_time, page_start=0, page_limit=None):
     
     return results
     
-def example_query_main():
-    query = "text:siemens"
-    start_time = "2013-08-31T00:00:00Z"
-    end_time = "2013-10-31T00:00:00Z"
-    results = query_solr(query, start_time, end_time, 10, 3)
-    print(len(results))
-
 def read_projects():
-    projects = [] 
+    projects = {}
     with open(PROJECT_CONF_FILE, "r") as fr:
         for line in fr:
             # empty line
@@ -55,15 +51,25 @@ def read_projects():
                 keywords = line.split("::")[1:]
                 project_id = line.split("::")[0]
                 project = {"id":project_id, "name": keywords[0], "keywords":keywords}
-                projects.append(project)
+                projects[project_id] = project
     return projects
 
-def execute_new_project(project):
-    query = '%s:%s' % (SEARCH_FIELD, " OR ".join(project['keywords']))
+def execute_regular_project(project):
+    yesterday =  (datetime.now()-timedelta(1)).strftime("%Y-%m-%dT%H:%M:%SZ")
+
     now = time.strftime("%Y-%m-%dT%H:%M:%SZ") 
-    docs = query_solr(query, CRAWL_BEGINNING_TIME, now)
+    execute_project(project, yesterday, now)
+
+def execute_new_project(project):
+    now = time.strftime("%Y-%m-%dT%H:%M:%SZ") 
+    execute_project(project, CRAWL_BEGINNING_TIME, now)
+
+def execute_project(project, start_time, end_time):
+    query = '%s:("%s")' % (SEARCH_FIELD, '" OR "'.join(project['keywords']))
+    docs = query_solr(query, start_time, end_time)
     print("Found %s docs for project %s" % (len(docs), project['id']))
     save_to_hdfs(docs, project)
+
 
 def save_to_hdfs(docs, project, index=0):
     client = InsecureClient(HDFS_URL, user=HDFS_USER)
@@ -78,10 +84,39 @@ def get_filename(project):
     datestr = time.strftime("%Y-%m-%d")
     return SAVE_FOLDER+project['id']+"/"+datestr+"/paradigma/"+timestr
 
+def usage(sys):
+    print "Usage: %s {new_project|project|all_projects} {project_id if not all_projects}" % sys.argv[0]
+
 def main():
-    projects = [read_projects()[0]]
-    for project in projects:
-        execute_new_project(project)
+    if(len(sys.argv) != 2 and len(sys.argv)!=3):
+        usage(sys)
+        exit(1)
+    projects = read_projects()
+    if sys.argv[1] == "new_project":
+        if len(sys.argv) ==3:
+            project_id = sys.argv[2]
+            if project_id in projects.keys():
+                execute_new_project(projects[project_id])
+            else:
+                print("No project with id %s" % project_id)
+                exit(1)
+        else:
+            usage()
+    elif sys.argv[1] == "project":
+        if len(sys.argv) ==3:
+            project_id = sys.argv[2]
+            if project_id in projects.keys():
+                execute_regular_project(projects[project_id])
+            else:
+                print("No project with id %s" % project_id)
+                exit(1)
+        else:
+            usage(sys)
+    elif sys.argv[1] == "all_projects" and len(sys.argv)==2:
+        for project_id in projects.keys():
+            execute_regular_project(projects[project_id])
+    else:
+        usage(sys)
 
 
 if __name__ == "__main__":
