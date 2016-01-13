@@ -127,6 +127,8 @@ def stream(query, projects, t):
         # for date
         if not os.path.isdir("data/projects/"+project_id+"/"+datestr):
             os.makedirs("data/projects/"+project_id+"/"+datestr)
+        if not os.path.isdir("data/projects/"+project_id+"/"+datestr+"/twitter"):
+            os.makedirs("data/projects/"+project_id+"/"+datestr+"/twitter")
 
         # create json file for writing data
         with open(filepath(project_id, datestr, timestr)+".json", "w") as fw:
@@ -268,7 +270,7 @@ def stream(query, projects, t):
     return False
 
 def filepath(project_id, datestr, timestr):
-    return PROJECTS_FOLDER+project_id+"/"+datestr+"/"+timestr
+    return PROJECTS_FOLDER+project_id+"/"+datestr+"/twitter/"+timestr
 
 if __name__ == "__main__":
     main()
