@@ -1,7 +1,7 @@
-Kutxabank::kutxabank::kutxabank
-BBVA::banco bilbao vizcaya::bbv argentaria::bbva_esp
-Caixabank::la caixa::lacaixa::caixabank::cuenta verde de microbank::infocaixa
-Laboral Kutxa::laboralkutxa::laboral-kutxa
-INGdirect::ing-direct::ing direct::ingdirectes
-Leroy Merlin::leroymerlin::leroy-merlin::leroymerlin_es
-Porcelanosa::porcelanosa_es
+Kutxabank::Kutxabank::kutxabank::kutxabank
+BBVA::BBVA::banco bilbao vizcaya::bbv argentaria::bbva_esp
+Caixabank::Caixabank::la caixa::lacaixa::caixabank::cuenta verde de microbank::infocaixa
+Laboral_Kutxa::Laboral Kutxa::laboralkutxa::laboral-kutxa
+INGdirect::INGdirect::ing-direct::ing direct::ingdirectes
+Leroy_Merlin::Leroy Merlin::leroymerlin::leroy-merlin::leroymerlin_es
+Porcelanosa::Porcelanosa::porcelanosa_es
