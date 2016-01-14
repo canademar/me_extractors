@@ -68,13 +68,14 @@ def execute_project(project, start_time, end_time):
     query = '%s:("%s")' % (SEARCH_FIELD, '" OR "'.join(project['keywords']))
     docs = query_solr(query, start_time, end_time)
     print("Found %s docs for project %s" % (len(docs), project['id']))
-    save_to_hdfs(docs, project)
+    if(len(docs)>0):
+        save_to_hdfs(docs, project)
 
 
 def save_to_hdfs(docs, project, index=0):
     client = InsecureClient(HDFS_URL, user=HDFS_USER)
     filename = get_filename(project)
-    print("Goint to write %s into %s_%s" % (len(docs), filename, index))
+    print("Going to write %s into %s_%s" % (len(docs), filename, index))
     text_to_write = "\n".join([json.dumps(doc) for doc in docs])
     with client.write(filename + "_" + str(index), encoding='utf-8') as writer:
         writer.write(text_to_write)
