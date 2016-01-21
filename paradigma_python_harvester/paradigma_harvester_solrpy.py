@@ -31,7 +31,7 @@ def query_solr(query, start_time, end_time, page_start=0, page_limit=None):
         start = i*PAGE_SIZE
         full_query = "%s AND %s:[%s TO %s]" % (query, DATE_FIELD, start_time, end_time)
         print("Query %s" % full_query)
-        response = solr.query(full_query)
+        response = solr.query(full_query, **{'rows':PAGE_SIZE, 'start':start})
         print("Please o please, print this")
         print("Response methods:%s" % dir(response))
         print("Hits: %s" % response.numFound)
@@ -41,14 +41,14 @@ def query_solr(query, start_time, end_time, page_start=0, page_limit=None):
             if "firstDownloadTime" in doc.keys():
                 doc["firstDownloadTime"] = str(doc["firstDownloadTime"])
             rows.append(doc)
-        doc = rows[0]
-        doc.pop("pageContent")
-        print(doc)
         results += rows
         i += 1
+        print(len(results))
         if(len(rows)<PAGE_SIZE):
+            print("Hit PAGE_SIZE")
             break
         if(page_limit and page_limit<=i-page_start):
+            print("HIT PAGE_LIMIT")
             break
     
     return results
