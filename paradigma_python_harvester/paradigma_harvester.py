@@ -5,7 +5,8 @@ import json
 import pysolr
 from hdfs import InsecureClient
 
-SOLR_INDEX = 'http://mixedadmin:7983/solr/mentions'
+#SOLR_INDEX = 'http://mixedadmin:7983/solr/mentions'
+SOLR_INDEX = 'http://144.76.155.175:5555/solr/'
 PAGE_SIZE = 1000
 MAX_RESULTS = 50000
 PROJECT_CONF_FILE = '../twitter_crawler_scripts/projects'    
@@ -27,6 +28,7 @@ def query_solr(query, start_time, end_time, page_start=0, page_limit=None):
         full_query = "%s AND created_at:[%s TO %s]" % (query, start_time, end_time)
         print("Query %s" % full_query)
         response = solr.search(full_query, **{'rows':PAGE_SIZE, 'start':start})
+        print("Please o please, print this")
         print("Hits: %s" % response.hits)
         rows = response.docs
         results += rows
