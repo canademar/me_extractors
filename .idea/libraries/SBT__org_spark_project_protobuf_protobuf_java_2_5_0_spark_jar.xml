@@ -1,0 +1,9 @@
+<component name="libraryTable">
+  <library name="SBT: org.spark-project.protobuf:protobuf-java:2.5.0-spark:jar">
+    <CLASSES>
+      <root url="jar://$MAVEN_REPOSITORY$/org/spark-project/protobuf/protobuf-java/2.5.0-spark/protobuf-java-2.5.0-spark.jar!/" />
+    </CLASSES>
+    <JAVADOC />
+    <SOURCES />
+  </library>
+</component>
