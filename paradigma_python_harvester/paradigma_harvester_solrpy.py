@@ -2,15 +2,19 @@ import sys
 import time
 from datetime import datetime, timedelta
 import json
-import pysolr
+import solr as solrpy
 from hdfs import InsecureClient
 
 #SOLR_INDEX = 'http://mixedadmin:7983/solr/mentions'
-SOLR_INDEX = 'http://144.76.155.175:5555/solr/'
+SOLR_INDEX = 'http://144.76.155.175:5555/solr'
+#SOLR_INDEX = "http://search.crawler.strat.io/solr/collection1"
 PAGE_SIZE = 1000
 MAX_RESULTS = 50000
 PROJECT_CONF_FILE = '../twitter_crawler_scripts/projects'    
-SEARCH_FIELD = 'text'
+#SEARCH_FIELD = 'text'
+SEARCH_FIELD = 'pageContent'
+#DATE_FIELD = 'created_at'
+DATE_FIELD = 'timeDownloaded'
 CRAWL_BEGINNING_TIME = '2012-04-24T00:00:00Z'
 SAVE_FOLDER = "data/projects/"
 HDFS_URL = 'http://192.168.1.12:50070'
@@ -20,22 +24,31 @@ HDFS_USER  = 'stratio'
 def query_solr(query, start_time, end_time, page_start=0, page_limit=None):
     """Page start and page limit can be used to digest chunk of the results, 
        in order to avoid too much info in memory"""
-    solr = pysolr.Solr(SOLR_INDEX)
+    solr = solrpy.SolrConnection(SOLR_INDEX)
     results = []   
     i = page_start    
     while(len(results)<MAX_RESULTS):
         start = i*PAGE_SIZE
-        full_query = "%s AND created_at:[%s TO %s]" % (query, start_time, end_time)
+        full_query = "%s AND %s:[%s TO %s]" % (query, DATE_FIELD, start_time, end_time)
         print("Query %s" % full_query)
-        response = solr.search(full_query, **{'rows':PAGE_SIZE, 'start':start})
+        response = solr.query(full_query, **{'rows':PAGE_SIZE, 'start':start})
         print("Please o please, print this")
-        print("Hits: %s" % response.hits)
-        rows = response.docs
+        print("Response methods:%s" % dir(response))
+        print("Hits: %s" % response.numFound)
+        rows = []
+        for doc in response.results:
+            doc["timeDownloaded"] = str(doc["timeDownloaded"])
+            if "firstDownloadTime" in doc.keys():
+                doc["firstDownloadTime"] = str(doc["firstDownloadTime"])
+            rows.append(doc)
         results += rows
         i += 1
+        print(len(results))
         if(len(rows)<PAGE_SIZE):
+            print("Hit PAGE_SIZE")
             break
         if(page_limit and page_limit<=i-page_start):
+            print("HIT PAGE_LIMIT")
             break
     
     return results
@@ -88,7 +101,7 @@ def get_filename(project):
     return SAVE_FOLDER+project['id']+"/"+datestr+"/paradigma/"+timestr
 
 def usage(sys):
-    print "Usage: %s {new_project|project|all_projects} {project_id if not all_projects}" % sys.argv[0]
+    print("Usage: %s {new_project|project|all_projects} {project_id if not all_projects}" % sys.argv[0])
 
 def main():
     if(len(sys.argv) != 2 and len(sys.argv)!=3):
