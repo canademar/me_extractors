@@ -7,10 +7,6 @@ import json
 import time
 import re
 
-#client_key = "4284680837-JRl0SwXnop8nJMUL0QEQ56BwDDXOpoa08tyRNUq"
-#client_secret = "JqynNht065BaMG59pljaKnD2Jcql1DKXnE8ExvwC2L9rO"
-#access_token = "OyfHS2NOKvefddSSjB24e3a8L"
-#access_token_secret = "zDpmCrMNtNCILQDYvS2yw7fCDBVMhym89m2B3s0hVv231EiryQ"
 
 access_token = "4284680837-JRl0SwXnop8nJMUL0QEQ56BwDDXOpoa08tyRNUq"
 access_token_secret= "JqynNht065BaMG59pljaKnD2Jcql1DKXnE8ExvwC2L9rO"
@@ -26,6 +22,7 @@ RESTART_TIME = 3600
 HDFS_URL = 'http://192.168.1.12:50070'
 HDFS_USER  = 'stratio'
 PROJECTS_FOLDER = 'data/projects/'
+WRITE_TO_FILE = False
 
 def main():
     """
@@ -108,34 +105,35 @@ def stream(query, projects, t):
     client = InsecureClient(HDFS_URL, user=HDFS_USER)
     for project in projects:
         project_id = project["id"]
+        tweets_to_write[project_id] = []
+        indexes[project_id] = 0
 
-        # for statistics
-        if not os.path.isdir("data/statistics"):
-            os.makedirs("data/statistics")
+        if WRITE_TO_FILE:
+            # for statistics
+            if not os.path.isdir("data/statistics"):
+                os.makedirs("data/statistics")
 
-        # for statistics date
-        if not os.path.isdir("data/statistics/"+datestr):
-            os.makedirs("data/statistics/"+datestr)
+            # for statistics date
+            if not os.path.isdir("data/statistics/"+datestr):
+                os.makedirs("data/statistics/"+datestr)
 
-        if not os.path.isdir("data/projects"):
-            os.makedirs("data/projects")
+            if not os.path.isdir("data/projects"):
+                os.makedirs("data/projects")
 
-        # for keyword
-        if not os.path.isdir("data/projects/"+project_id):
-            os.makedirs("data/projects/"+project_id)
+            # for keyword
+            if not os.path.isdir("data/projects/"+project_id):
+                os.makedirs("data/projects/"+project_id)
 
-        # for date
-        if not os.path.isdir("data/projects/"+project_id+"/"+datestr):
-            os.makedirs("data/projects/"+project_id+"/"+datestr)
-        if not os.path.isdir("data/projects/"+project_id+"/"+datestr+"/twitter"):
-            os.makedirs("data/projects/"+project_id+"/"+datestr+"/twitter")
+            # for date
+            if not os.path.isdir("data/projects/"+project_id+"/"+datestr):
+                os.makedirs("data/projects/"+project_id+"/"+datestr)
+            if not os.path.isdir("data/projects/"+project_id+"/"+datestr+"/twitter"):
+                os.makedirs("data/projects/"+project_id+"/"+datestr+"/twitter")
 
-        # create json file for writing data
-        with open(filepath(project_id, datestr, timestr)+".json", "w") as fw:
-            fw.write("[")
+            # create json file for writing data
+            with open(filepath(project_id, datestr, timestr)+".json", "w") as fw:
+                fw.write("[")
 
-            tweets_to_write[project_id] = []
-            indexes[project_id] = 0
              
 
     while True:
@@ -156,23 +154,22 @@ def stream(query, projects, t):
                         # for every word in keyword
                         for w in wlist:
                             # check if word is in tweet
-                            keyword = re.search("%s" % w, tweet["text"], re.IGNORECASE)
-                            if keyword:
+                            word_match = re.search("%s" % w, tweet["text"], re.IGNORECASE)
+                            if word_match:
                                 check += 1
                                 if check== w_length:
+                                    tweet["synonym_found"] = keyword
                                     break
                     # if every word from keyword is in tweet, save to file
                     if check == w_length:
                          #print "Tweet language: %s" % tweet['lang']
                          if tweet['lang'] in languages:
-                             dumped_json = json.dumps(tweet)
-                             tweets_to_write[project_id].append(dumped_json)
-                             with open(filename + ".json", "a") as fw:
-                                 fw.write(dumped_json)
-                                 fw.write(",")
-                                                     
-                                                
-
+                             tweets_to_write[project_id].append(tweet)
+                             if WRITE_TO_FILE:
+                                 with open(filename + ".json", "a") as fw:
+                                     dumped_json = json.dumps(tweet)
+                                     fw.write(dumped_json)
+                                     fw.write(",")
 
                              # counting total
                              if project_id in total_keywords:
@@ -187,7 +184,8 @@ def stream(query, projects, t):
                           
                              #print "Tweets for %s: %s" % (project_id, len(tweets_to_write[project_id]))
                              if len(tweets_to_write[project_id]) % TWEET_DUMP_SIZE == 0:
-                                 print "Goint to write %s into %s_%s" % (TWEET_DUMP_SIZE, filename, indexes[project_id])
+                                 print "Going to write %s into %s_%s" % (TWEET_DUMP_SIZE, filename, indexes[project_id])
+                                 formatted_tweets = format_tweets(tweets_to_write[project_id])
                                  text_to_write = "\n".join(tweets_to_write[project_id])
                                  with client.write(filename + "_" + str(indexes[project_id]), encoding='utf-8') as writer:
                                      writer.write(text_to_write)
@@ -199,27 +197,30 @@ def stream(query, projects, t):
                     print "An hour has passed, writing remaining tweets \n"
                     for project in projects:
                         project_id = project['id']
-                        with open(filepath(project_id, datestr, timestr)+".json", "a+") as fw:
-                            fw.seek(-1, os.SEEK_END)
-                            if fw.read() == ",":
+                        if WRITE_TO_FILE:
+                            with open(filepath(project_id, datestr, timestr)+".json", "a+") as fw:
                                 fw.seek(-1, os.SEEK_END)
-                                fw.truncate()
-                            fw.write("]")
+                                if fw.read() == ",":
+                                    fw.seek(-1, os.SEEK_END)
+                                    fw.truncate()
+                                fw.write("]")
                         print "Remaining tweets to write %s: %s" % (project_id, len(tweets_to_write[project_id]))
                         filename = filepath(project_id, datestr, timestr)
                         if(len(tweets_to_write[project_id])>0):
                             print "Goint to write into %s_%s" % (filename, indexes[project_id])
+                            formatted_tweets = [format_tweet(tweet, keyword_found, project) for tweet in tweets_to_write[project_id]]
                             text_to_write = "\n".join(tweets_to_write[project_id])
                             with client.write(filename + "_" + str(indexes[project_id]+1), encoding='utf-8') as writer:
                                 writer.write(text_to_write)
-                    # hour statistics
-                    with open("data/statistics"+"/"+datestr+"/"+timestr+".txt", "w") as fw:
-                        for word in hour_keywords:
-                            fw.write(str(word) + " : " + str(hour_keywords[word]) + "\n")
-                    # total statistics
-                    with open("data/statistics/statistics.txt", "w") as fw:
-                        for word in total_keywords:
-                            fw.write(str(word) + " : " + str(total_keywords[word]) + "\n")
+                    if WRITE_TO_FILE:
+                        # hour statistics
+                        with open("data/statistics"+"/"+datestr+"/"+timestr+".txt", "w") as fw:
+                            for word in hour_keywords:
+                                fw.write(str(word) + " : " + str(hour_keywords[word]) + "\n")
+                        # total statistics
+                        with open("data/statistics/statistics.txt", "w") as fw:
+                            for word in total_keywords:
+                                fw.write(str(word) + " : " + str(total_keywords[word]) + "\n")
                     return True
 
         # except for quit application
@@ -227,20 +228,22 @@ def stream(query, projects, t):
             for project in projects:
                 word = project["name"]
                 project_id = project['id']
-                with open(filepath(project_id, datestr, timestr)+".json", "a+") as fw:
-                    fw.seek(-1, os.SEEK_END)
-                    if fw.read() == ",":
+                if WRITE_TO_FILE:
+                    with open(filepath(project_id, datestr, timestr)+".json", "a+") as fw:
                         fw.seek(-1, os.SEEK_END)
-                        fw.truncate()
-                    fw.write("]")
-            # hour statistics
-            with open("data/statistics"+"/"+datestr+"/"+timestr+".txt", "w") as fw:
-                for word in hour_keywords:
-                    fw.write(str(word) + " : " + str(hour_keywords[word]) + "\n")
-            # total statistics
-            with open("data/statistics/statistics.txt", "w") as fw:
-                for word in total_keywords:
-                    fw.write(str(word) + " : " + str(total_keywords[word]) + "\n")
+                        if fw.read() == ",":
+                            fw.seek(-1, os.SEEK_END)
+                            fw.truncate()
+                        fw.write("]")
+            if WRITE_TO_FILE:
+                # hour statistics
+                with open("data/statistics"+"/"+datestr+"/"+timestr+".txt", "w") as fw:
+                    for word in hour_keywords:
+                        fw.write(str(word) + " : " + str(hour_keywords[word]) + "\n")
+                # total statistics
+                with open("data/statistics/statistics.txt", "w") as fw:
+                    for word in total_keywords:
+                        fw.write(str(word) + " : " + str(total_keywords[word]) + "\n")
             sys.stdout.write("QUIT\n")
             sys.exit(0)
         # except for problems with key
@@ -250,24 +253,41 @@ def stream(query, projects, t):
                 for project in projects:
                     word = project["name"]
                     project_id = project['id']
-                    with open(filepath(project_id, datestr, timestr)+".json", "a+") as fw:
-                        fw.seek(-1, os.SEEK_END)
-                        if fw.read() == ",":
+                    if WRITE_TO_FILE:
+                        with open(filepath(project_id, datestr, timestr)+".json", "a+") as fw:
                             fw.seek(-1, os.SEEK_END)
-                            fw.truncate()
-                        fw.write("]")
-                # hour statistics
-                with open("data/statistics"+"/"+datestr+"/"+timestr+".txt", "w") as fw:
-                    for word in hour_keywords:
-                        fw.write(str(word) + " : " + str(hour_keywords[word]) + "\n")
-                # total statistics
-                with open("data/statistics/statistics.txt", "w") as fw:
-                    for word in total_keywords:
-                        fw.write(str(word) + " : " + str(total_keywords[word]) + "\n")
+                            if fw.read() == ",":
+                                fw.seek(-1, os.SEEK_END)
+                                fw.truncate()
+                            fw.write("]")
+                if WRITE_TO_FILE:
+                    # hour statistics
+                    with open("data/statistics"+"/"+datestr+"/"+timestr+".txt", "w") as fw:
+                        for word in hour_keywords:
+                            fw.write(str(word) + " : " + str(hour_keywords[word]) + "\n")
+                    # total statistics
+                    with open("data/statistics/statistics.txt", "w") as fw:
+                        for word in total_keywords:
+                            fw.write(str(word) + " : " + str(total_keywords[word]) + "\n")
                 return True
             continue
     # error
     return False
+
+def format_tweet(tweet, project, keyword_found):
+    structure = {"source":"twitter",
+                 "brand": project["brand"],
+                 "synonym_found": keyword_found,
+                 "synonyms": project["keywords"],
+                 "nots": project["nots"],
+                 "project_id": project["project_id"],
+                 "raw": tweet,
+                 "text": tweet["text"],
+                 "time": tweet["created_at"],
+                 "url": tweet["url"],
+                 "lang": tweet["lang"]
+                }
+    return json.dumps(structure)
 
 def filepath(project_id, datestr, timestr):
     return PROJECTS_FOLDER+project_id+"/"+datestr+"/twitter/"+timestr
