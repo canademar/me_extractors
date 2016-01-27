@@ -55,19 +55,22 @@ def main():
 
         # open file for read
         with open(input_file, "r") as fr:
-            for line in fr:
-                # empty line
-                if line != '\n':
-                    # remove white chars in start and end of line
-                    line = line.rstrip('\n\t ')
-                    line = line.strip('\t ')
-                    # append line to array and string
-                    keywords = line.split("::")[1:]
-                    project_id = line.split("::")[0]
-                    keys = keys + ",".join(keywords) + ","
-                    project = {"id":project_id, "name": keywords[0], "keywords":keywords}
-                    projects.append(project)
+            string_txt = fr.read()
+            projects = json.loads(string_txt)
+            #for line in fr:
+            #    # empty line
+            #    if line != '\n':
+            #        # remove white chars in start and end of line
+            #        line = line.rstrip('\n\t ')
+            #        line = line.strip('\t ')
+            #        # append line to array and string
+            #        keywords = line.split("::")[1:]
+            #        project_id = line.split("::")[0]
+            #        keys = keys + ",".join(keywords) + ","
+            #        project = {"id":project_id, "name": keywords[0], "keywords":keywords}
+            #        projects.append(project)
 
+        print("Projects %s" % str(projects))
         keys = keys.rstrip(",")
 
         # create Twarc class
@@ -276,7 +279,7 @@ def stream(query, projects, t):
 
 def format_tweet(tweet, project, keyword_found):
     structure = {"source":"twitter",
-                 "brand": project["brand"],
+                 "brand": project["name"],
                  "synonym_found": keyword_found,
                  "synonyms": project["keywords"],
                  "nots": project["nots"],
