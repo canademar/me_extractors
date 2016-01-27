@@ -1,0 +1,9 @@
+<component name="libraryTable">
+  <library name="SBT: org.spark-project:pyrolite:2.0.1:jar">
+    <CLASSES>
+      <root url="jar://$MAVEN_REPOSITORY$/org/spark-project/pyrolite/2.0.1/pyrolite-2.0.1.jar!/" />
+    </CLASSES>
+    <JAVADOC />
+    <SOURCES />
+  </library>
+</component>
