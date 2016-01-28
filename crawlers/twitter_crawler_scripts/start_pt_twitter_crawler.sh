@@ -1,6 +1,6 @@
 #!/bin/bash
 
-COMMAND="python twitter_pt_project.py keywords"
+COMMAND="python twitter_pt_project.py projects.json"
 SERVICE_NAME="PT Twitter Crawler"
 LOGS_FOLDER=logs
 LOG_FILE=$LOGS_FOLDER/pt_tw_crawler.log
