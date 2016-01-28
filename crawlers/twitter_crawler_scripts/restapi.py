@@ -4,8 +4,8 @@ import re
 import time
 
 server = "0.0.0.0"
-port = 8081
-file_server = "192.168.1.12"
+port = 9081
+file_server = "136.243.53.83"
 port_file_server = 8001
 
 def check_file_name(filename, start, end):
@@ -20,7 +20,8 @@ def check_file_name(filename, start, end):
 		file_time = int(time.mktime(time.strptime(filename.rsplit(".",1)[0], "%Y-%m-%d_%H-%M-%S")))
 		start_time = int(time.mktime(time.strptime(start, "%Y-%m-%d_%H-%M-%S")))
 		end_time = int(time.mktime(time.strptime(end, "%Y-%m-%d_%H-%M-%S")))
-		
+                now = time.time()
+	        print("Filetime:%s, now:%s, diff:%s" % (file_time, now, now-file_time))
 		if (int(time.time())-file_time) <= 3630:
 			return False
 
@@ -28,6 +29,7 @@ def check_file_name(filename, start, end):
 		if file_time > (start_time-3600) and file_time <= end_time:
 			return True
 
+        print("Not in the interval")
 	return False
 
 @get('/interval_all/<start>/<end>')
@@ -44,7 +46,7 @@ def do_intall(start, end):
 				path = path.replace (" ", "_")
 				paths.append(path)
 	# return all adresses of files
-	return (path+"\n" for path in paths)
+	return ("<a href='%s'>%s</a><br/>" % (path, path) for path in paths)
 
 @get('/interval_keyword/<keyword>/<start>/<end>')
 def do_intkey(keyword, start, end):

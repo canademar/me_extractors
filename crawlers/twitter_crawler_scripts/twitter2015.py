@@ -12,10 +12,10 @@ import re
 #access_token = "OyfHS2NOKvefddSSjB24e3a8L"
 #access_token_secret = "zDpmCrMNtNCILQDYvS2yw7fCDBVMhym89m2B3s0hVv231EiryQ"
 
-access_token = "4284680837-JRl0SwXnop8nJMUL0QEQ56BwDDXOpoa08tyRNUq"
-access_token_secret= "JqynNht065BaMG59pljaKnD2Jcql1DKXnE8ExvwC2L9rO"
-client_key = "OyfHS2NOKvefddSSjB24e3a8L"
-client_secret = "zDpmCrMNtNCILQDYvS2yw7fCDBVMhym89m2B3s0hVv231EiryQ"
+access_token = "4856647426-aF9OApsynJsDXTNaBAMSBOOOIXeFLG3MWAaNVwl"
+access_token_secret= "k5pMljBH4YLzEi3Q4317LNyfzPsjUVdhayMf3vuJEgFq9"
+client_key = "nQEz7aGgzA3WtnnnSM8AnBCVu"
+client_secret = "StTQXU01g6UbIjosjQXXOUaj2GTDXYiuEtl8EfcE1VECgUKNM0"
 
 total_keywords = {}
 
