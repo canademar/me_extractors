@@ -10,6 +10,7 @@ SIMPLE_SERVER_LOG_FILE=$LOGS_FOLDER/simple_server.log
 PID_FOLDER=$WD/pids
 PID_FILE=$PID_FOLDER/restapi.pid
 SIMPLE_SERVER_PID_FILE=$PID_FOLDER/simple_server.pid
+DATA_FOLDER=$WD/data
 
 CURRENT_SERV_PID=0
 if [ -e "$PID_FILE" ];
