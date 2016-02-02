@@ -24,3 +24,9 @@ project/plugins/project/
 *.pyc
 .python-version
 
+# BRMDemo Marche Meetin resources
+*/BRMDemo_MarchMeeting/src/main/resources/*
+
+# BRMDemo target jars
+*/BRMDemo_MarchMeeting/target/scala-2.10/*
+
