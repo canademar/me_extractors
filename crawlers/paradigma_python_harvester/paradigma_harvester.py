@@ -1,5 +1,6 @@
 import sys
 import re
+import logging
 import time
 from datetime import datetime, timedelta
 import json
@@ -154,15 +155,21 @@ def usage(sys):
     print("Usage: %s {new_projects|projects} {json_content}" % sys.argv[0])
 
 def main():
+    logging.basicConfig(filename='pt_crawler.log',level=logging.DEBUG, format='%(asctime)s %(message)s', datefmt='%Y-%m-%d')
+    logging.debug('This message should go to the log file')
+    logging.info('So should this')
+    logging.warning('And this, too')
     if(len(sys.argv) != 3):
         usage(sys)
         exit(1)
     projects = read_projects(sys.argv[2])
     if sys.argv[1] == "new_projects":
         for project_id in projects.keys():
+            logging.info("Starting new project: %s" % projects[project_id]["id"])
             execute_new_project(projects[project_id])
     elif sys.argv[1] == "projects":
         for project_id in projects.keys():
+            logging.info("Starting regular project: %s" % projects[project_id]["id"])
             execute_regular_project(projects[project_id])
     else:
         usage(sys)
