@@ -5,6 +5,8 @@
         "synonyms": ["Kutxabank", "kutxabank"],
         "nots": [],
         "id": 1,
+        "start": "20160204",
+        "end": "20160501",
         "period": "12"
     },
     {
@@ -13,6 +15,8 @@
         "synonyms": ["BBVA", "banco bilbao vizcaya", "bbv argentaria", "bbva_esp"],
         "nots": ["liga", "league", "futbol", "soccer", "match"],
         "id": 2,
+        "start": "20160101",
+        "end": "20160501",
         "period": "12"
     },
     {
@@ -21,6 +25,8 @@
         "synonyms": ["Caixabank", "la caixa", "lacaixa", "caixabank", "cuenta verde de microbank", "infocaixa"],
         "nots": [],
         "id": 3,
+        "start": "20160101",
+        "end": "20160501",
         "period": "12"
     },
     {
@@ -29,6 +35,8 @@
         "synonyms": [ "Laboral Kutxa",  "laboralkutxa",  "laboral-kutxa"],
         "nots": [],
         "id": 4,
+        "start": "20160101",
+        "end": "20160501",
         "period": "12"
     },
     {
@@ -37,6 +45,8 @@
         "synonyms": [ "INGdirect",  "ing-direct",  "ing direct",  "ingdirectes"],
         "nots": [],
         "id": 5,
+        "start": "20160101",
+        "end": "20160501",
         "period": "12"
     },
     {
@@ -45,6 +55,8 @@
         "synonyms": [ "Leroy Merlin",  "leroymerlin",  "leroy-merlin",  "leroymerlin_es"],
         "nots": [],
         "id": 6,
+        "start": "20160101",
+        "end": "20160501",
         "period": "12"
     },
     {
@@ -53,6 +65,8 @@
         "synonyms": [ "Porcelanosa",  "porcelanosa_es"],
         "nots": [],
         "id": 7,
+        "start": "20160101",
+        "end": "20160501",
         "period": "12"
     }
 ]
