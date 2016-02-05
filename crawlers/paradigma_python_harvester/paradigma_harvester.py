@@ -82,9 +82,9 @@ def format_docs(docs, project):
         result_docs.append(doc)
     return result_docs
     
-def read_projects(json_string):
-    #with open(conf_path, "r") as fr:
-    #    projects = json.load(fr)
+def read_projects(conf_path):
+    with open(conf_path, "r") as fr:
+        projects = json.load(fr)
     #    for line in fr:
     #        # empty line
     #        if line != '\n':
@@ -96,7 +96,6 @@ def read_projects(json_string):
     #            project_id = line.split("::")[0]
     #            project = {"id":project_id, "name": keywords[0], "keywords":keywords}
     #            projects[project_id] = project
-    projects = json.loads(json_string)
     result = {}
     for project in projects:
         result[str(project["id"])] = project
@@ -151,7 +150,9 @@ def parse_solr_time(solr_time):
     return date.strftime("%Y%m%d%H%M%S")
 
 def usage(sys):
-    print("Usage: %s {new_projects|projects} {json_content}" % sys.argv[0])
+    for argv in sys.argv:
+        print "Argv: %s\n" % argv
+    print("Usage: %s {new_projects|projects} {json_path}" % sys.argv[0])
 
 def main():
     if(len(sys.argv) != 3):
