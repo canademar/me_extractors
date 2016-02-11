@@ -44,7 +44,10 @@ Serializable{
 
     val filtTax = taxonomy.filter(x=>x._2>inlinks_threshold).map(x=>(x._1,Set.empty))
 
-    val input = inputIndexMap.map(x=>(x._1.getOrElse("text","").asInstanceOf[String],defineSubentities(x._1.getOrElse("text", "").asInstanceOf[String]), x._2)) // origMap, submessages, index
+    val filteredInput = inputIndexMap.filter(x=>x._1.getOrElse("lang","")=="es")
+
+    val input = filteredInput.map(x=>(x._1.getOrElse("text","").asInstanceOf[String],defineSubentities(x._1.getOrElse("text", "").asInstanceOf[String]), x._2)) // origMap, submessages, index
+    //val input = inputIndexMap.map(x=>(x._1.getOrElse("text","").asInstanceOf[String],defineSubentities(x._1.getOrElse("text", "").asInstanceOf[String]), x._2)) // origMap, submessages, index
 
     val tempInput = input.map(x=>(x._2, x._3)).map(x=>{
       var tempSet = scala.collection.mutable.Set[(String, Long)]()

@@ -12,13 +12,12 @@ import scala.util.parsing.json.JSON
  * Created by cnavarro on 24/11/15.
  */
 object SparkSentiment {
-  val resourcesPath: String = "/var/data/resources/nuig_sentiment/"
-  //val resourcesPath: String = "/home/jvmarcos/Proyectos/MixedEmotions/Development/BRMDemo_MarchMeeting/src/main/resources/"
-  val glovePath: String = resourcesPath + "embeddings/glove.twitter.27B.50d.txt"
-  val dataPath: String = resourcesPath + "data/twitterSemEval2013.tsv"
-  val modelPath: String = resourcesPath + "model/learntSentiTwitter.model"
 
-  def extractSentiment(lines: Iterator[String]): Iterator[Map[String,Any]] = {
+  def extractSentiment(lines: Iterator[String], resourcesFolder: String): Iterator[Map[String,Any]] = {
+    val glovePath: String = resourcesFolder + "embeddings/glove.twitter.27B.50d.txt"
+    val dataPath: String = resourcesFolder + "data/twitterSemEval2013.tsv"
+    val modelPath: String = resourcesFolder + "model/learntSentiTwitter.model"
+
     val timestart = System.currentTimeMillis()
     val sentimenter: TwitterSentiMain = new TwitterSentiMain
     println("modelPath = " + modelPath)
@@ -33,10 +32,14 @@ object SparkSentiment {
 
   }
 
-  def extractSentimentFromMap(lines: Iterator[scala.collection.mutable.Map[String,Any]]) : Iterator[scala.collection.mutable
+  def extractSentimentFromMap(lines: Iterator[scala.collection.mutable.Map[String,Any]], resourcesFolder:String) : Iterator[scala.collection.mutable
   .Map[String,Any]]= {
 
     val sentimenter: TwitterSentiMain = new TwitterSentiMain
+    val glovePath: String = resourcesFolder + "embeddings/glove.twitter.27B.50d.txt"
+    val dataPath: String = resourcesFolder + "data/twitterSemEval2013.tsv"
+    val modelPath: String = resourcesFolder + "model/learntSentiTwitter.model"
+
     sentimenter.loadModel(modelPath, glovePath, dataPath)
 
     for(line<-lines) yield {
@@ -55,11 +58,11 @@ object SparkSentiment {
   }
   
 
-  def extractSentimentFromRDD(input: RDD[String]): RDD[String] = {
+  def extractSentimentFromRDD(input: RDD[String], resourcesFolder: String): RDD[String] = {
 
     val temp = input.map(x=> JSON.parseFull(x).asInstanceOf[Some[Map[String,Any]]].getOrElse(Map[String,Any]())).map(x => collection.mutable.Map(x.toSeq: _*))
 
-    val temp2 = temp.mapPartitions(item =>extractSentimentFromMap(item))
+    val temp2 = temp.mapPartitions(item =>extractSentimentFromMap(item, resourcesFolder))
 
     temp2.mapPartitions(x => {
 

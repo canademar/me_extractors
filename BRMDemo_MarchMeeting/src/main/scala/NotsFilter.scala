@@ -10,10 +10,10 @@ object NotsFilter {
 
   def filterText(input: RDD[String]): RDD[String] = input.map(x => JSON.parseFull(x)
     .asInstanceOf[Some[Map[String, Any]]].getOrElse(Map[String, Any]())).filter(x => {
-    val nots = x.get("nots").asInstanceOf[Some[List[String]]].getOrElse(List[String]())
+    val nots = x.get("nots").asInstanceOf[Some[List[String]]].getOrElse(List[String]()).map(x=>x.toLowerCase())
     val text = x.get("text").asInstanceOf[Some[String]].getOrElse("")
     val resultArray = nots.map(x => {
-      !(text.contains(x))
+      !(text.toLowerCase.contains(x))
     })
     val result = resultArray.foldLeft(true)(_ & _)
     result
