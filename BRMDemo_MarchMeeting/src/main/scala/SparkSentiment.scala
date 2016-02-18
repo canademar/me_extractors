@@ -40,6 +40,10 @@ object SparkSentiment {
     val dataPath: String = resourcesFolder + "data/twitterSemEval2013.tsv"
     val modelPath: String = resourcesFolder + "model/learntSentiTwitter.model"
 
+    println("******************glovePath: "+glovePath)
+    println("******************dataPath: "+dataPath)
+    println("******************modelPath: "+modelPath)
+
     sentimenter.loadModel(modelPath, glovePath, dataPath)
 
     for(line<-lines) yield {
