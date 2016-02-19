@@ -167,7 +167,7 @@ object ElasticsearchPersistor {
 
 
   def persistTweetsFromRDD(input: RDD[String], ip: String, port: Int, clusterName: String): RDD[String] = {
-    println("~~~~~~~~~~~~~~~~~going to persist")
+    println("~~~~~~~~~~~~~~~~~going to persist in " + "ip" + port.toString + "clusterName")
     val parsedTweets = input.map(x=> JSON.parseFull(x).asInstanceOf[Some[Map[String,Any]]].getOrElse(Map[String,Any]()))
 
     val formattedTweets = parsedTweets.map(tweet => formatTweet(tweet))
@@ -175,6 +175,24 @@ object ElasticsearchPersistor {
     formattedTweets.foreachPartition(iter => persistTweetsFromMap(iter, ip, port, clusterName))
 
     input
+  }
+
+
+  def main (args: Array[String]) {
+    val ip = "mixednode2"
+    val port = 9300
+    val clusterName = "Mixedemotions Elasticsearch"
+    val persistor : ElasticsearchPersistor = new ElasticsearchPersistor(ip, port, clusterName)
+    val resp = persistor.client.execute {
+      index into "myanalyzed" / "test" fields(
+
+        "brand" -> "test",
+        "text" -> "some text",
+        "index_time" -> System.currentTimeMillis()
+
+        ) id "test1111"
+    }.await
+
   }
 }
 
