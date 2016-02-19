@@ -8,6 +8,7 @@ import org.json4s.jackson.Serialization
 import org.json4s.jackson.Serialization._
 
 import com.sksamuel.elastic4s.ElasticDsl.index
+import com.sksamuel.elastic4s.ElasticDsl.bulk
 import com.sksamuel.elastic4s.ElasticDsl._
 import com.sksamuel.elastic4s.{ElasticClient, ElasticsearchClientUri}
 import org.apache.spark.rdd.RDD
@@ -66,6 +67,20 @@ class ElasticsearchPersistor(val client: ElasticClient) {
 
   }
 
+  def saveTweets(tweets: Seq[Map[String,Any]]): Unit ={
+    println("Bulk Bogan!")
+     val resp = client.execute {
+       bulk(
+         for(tweet<-tweets) yield {
+           index into "myanalyzed" / "tweet" fields (tweet) id tweet("id")
+         }
+           )
+       }
+
+     }
+
+
+
 
 }
 
@@ -90,22 +105,14 @@ object ElasticsearchPersistor {
 
   }
 
-  def persistTweetsFromMap(lines: Iterator[scala.collection.mutable.Map[String,Any]], ip:String, port:Int, clusterName: String) : Unit= {
+  def persistTweetsFromMap(lines: Iterator[Map[String,Any]], ip:String, port:Int, clusterName: String) : Unit= {
     val persistor : ElasticsearchPersistor = new ElasticsearchPersistor(ip, port, clusterName)
 
-    for(line<-lines) yield {
-      persistor.saveTweet(line.toMap)
+    val chunks = lines.grouped(100)
+
+    for(chunk<-chunks) {
+      persistor.saveTweets(chunk)
     }
-
-    /*
-    var todosloselements: Array
-    foreach 100 elements in lines
-       todosloseleemtns += persist(100elements)
-
-    return todosloselements.toIterator
-     */
-
-
 
   }
 
@@ -113,7 +120,7 @@ object ElasticsearchPersistor {
     println("~~~~~~~~~~~~~~~~~going to persist")
     val temp = input.map(x=> JSON.parseFull(x).asInstanceOf[Some[Map[String,Any]]].getOrElse(Map[String,Any]())).map(x => collection.mutable.Map(x.toSeq: _*))
 
-    val temp2 = temp.mapPartitions(iter => persistTweetsFromMap(iter, ip, port, clusterName))
+    val temp2 = temp.mapPartitions(iter => persistTweetsFromMapMP(iter, ip, port, clusterName))
 
 
     temp2.mapPartitions(x => {
@@ -131,16 +138,43 @@ object ElasticsearchPersistor {
 
   }
 
+  def formatTweet(tweet: Map[String,Any]) : Map[String, Any] = {
+    val rawTweet  = tweet("raw").asInstanceOf[Map[String,Any]]
+    val projectId = tweet("project_id").asInstanceOf[Double].round.toInt
+    Map("lang" -> tweet("lang").asInstanceOf[String],
+        "raw" ->  rawTweet,
+        "brand" -> tweet("brand").asInstanceOf[String],
+        "text" -> tweet("text").asInstanceOf[String],
+        "created_at" -> tweet("time").asInstanceOf[String],
+        //"hashtags" -> record.getOrElse("hashtags", "").asInstanceOf[List[String]].toArray,
+        //"topics" -> record.getOrElse("topics", "").asInstanceOf[List[String]].toArray,
+        "project" -> projectId,
+        //"concepts" -> record.getOrElse("concepts", "").asInstanceOf[List[String]].toArray,
+        //"mentions" -> record.getOrElse("mentions", "").asInstanceOf[List[String]].toArray,
+        //"sentiment" -> record.getOrElse("sentiment", "").asInstanceOf[String],
+        "tweet_id" -> rawTweet("id_str").asInstanceOf[String],
+        "id" -> List(projectId, rawTweet("id_str").asInstanceOf[String]).mkString("_"),
+        "url" -> tweet("url"),
+        "synonym_found" -> tweet("synonym_found"),
+        "source" -> tweet("source"),
+        "nots" -> tweet("nots"),
+        "synonyms" -> tweet("synonyms"),
+        "index_time" -> System.currentTimeMillis()
+    )
 
-  def persistTweetsFromRDD(input: RDD[String], ip: String, port: Int, clusterName: String): Unit = {
+
+  }
+
+
+  def persistTweetsFromRDD(input: RDD[String], ip: String, port: Int, clusterName: String): RDD[String] = {
     println("~~~~~~~~~~~~~~~~~going to persist")
-    val temp = input.map(x=> JSON.parseFull(x).asInstanceOf[Some[Map[String,Any]]].getOrElse(Map[String,Any]())).map(x => collection.mutable.Map(x.toSeq: _*))
+    val parsedTweets = input.map(x=> JSON.parseFull(x).asInstanceOf[Some[Map[String,Any]]].getOrElse(Map[String,Any]()))
 
-    val temp2 = temp.foreachPartition(iter => persistTweetsFromMap(iter, ip, port, clusterName))
+    val formattedTweets = parsedTweets.map(tweet => formatTweet(tweet))
 
+    formattedTweets.foreachPartition(iter => persistTweetsFromMap(iter, ip, port, clusterName))
 
-
-
+    input
   }
 }
 

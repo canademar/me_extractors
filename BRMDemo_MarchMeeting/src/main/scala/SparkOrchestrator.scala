@@ -8,8 +8,8 @@ import org.apache.spark.{SparkConf, SparkContext}
 import scala.util.parsing.json.JSON
 
 object SparkOrchestrator {
-  val confFilePath = "/home/cnavarro/workspace/mixedemotions/me_extractors/BRMDemo_MarchMeeting/src/main/resources/cnavarro.conf"
-  //val confFilePath = "/home/cnavarro/me_extractors/BRMDemo_MarchMeeting/src/main/resources/production.conf"
+  //val confFilePath = "/home/cnavarro/workspace/mixedemotions/me_extractors/BRMDemo_MarchMeeting/src/main/resources/cnavarro.conf"
+  val confFilePath = "/home/cnavarro/me_extractors/BRMDemo_MarchMeeting/src/main/resources/production.conf"
 
   val masterConfiguration : Config = {
     val parsedConf = ConfigFactory.parseFile(new File(confFilePath))
@@ -32,8 +32,8 @@ object SparkOrchestrator {
 
 
     // Spark configuration and context
-    //val sparkConf = new SparkConf(true).setAppName("demoBRM").setMaster("mesos://192.168.1.12:5050")//.setMaster("local[*]")
-    val sparkConf = new SparkConf(true).setAppName("demoBRM").setMaster("local[*]")
+    val sparkConf = new SparkConf(true).setAppName("demoBRM").setMaster("mesos://192.168.1.12:5050")//.setMaster("local[*]")
+    //val sparkConf = new SparkConf(true).setAppName("demoBRM").setMaster("local[*]")
     val sc = new SparkContext(sparkConf)
 
     // Loading data
@@ -50,8 +50,9 @@ object SparkOrchestrator {
 
 
 
-    val initData = sc.textFile("/home/cnavarro/workspace/mixedemotions/data/2016-02-07_02-18-35_1")
-
+    //val initData = sc.textFile("/home/cnavarro/workspace/mixedemotions/data/2016-02-07_02-18-35_1")
+    //val initData = sc.textFile("/home/cnavarro/workspace/mixedemotions/data/2016-02-07/BBVA/2016-02-07_19-21-27_1")
+    val initData = sc.textFile("hdfs:///user/stratio/data/projects/1/2016-02-01/twitter/2016-02-01_21-31-20_1")
     //val data = initData.union(addData)
     val data = initData
 
@@ -169,9 +170,14 @@ object SparkOrchestrator {
   */
 
   val elasticsearch_persistor: RDD[String] => RDD[String] = {
-    val esIP = "mixednode2"
+    /*val esIP = "mixednode2"
     val esPort = 9300
     val esClusterName = "Mixedemotions Elasticsearch"
+    */
+    val esIP = masterConfiguration.getString("conf.elasticsearch.ip")
+    val esPort = masterConfiguration.getInt("conf.elasticsearch.port")
+    val esClusterName = masterConfiguration.getString("conf.elasticsearch.clusterName")
+
     ElasticsearchPersistor.persistTweetsFromRDD(_, esIP, esPort , esClusterName)
 
 

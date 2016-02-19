@@ -1,6 +1,6 @@
 name := "BRMDemo_MarchMeeting"
 
-version := "1.4.3"
+version := "1.4.4"
 
 scalaVersion := "2.10.4"
 
