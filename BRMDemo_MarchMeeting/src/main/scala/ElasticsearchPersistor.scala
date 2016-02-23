@@ -17,10 +17,11 @@ import org.elasticsearch.common.settings.ImmutableSettings
 /**
  * Created by cnavarro on 16/02/16.
  */
-class ElasticsearchPersistor(val client: ElasticClient) {
+class ElasticsearchPersistor(val client: ElasticClient, val indexName: String) {
 
-  def this(ip: String, port: Int, clusterName: String){
-    this(ElasticClient.remote(ImmutableSettings.settingsBuilder().put("cluster.name", clusterName).build(), ElasticsearchClientUri("elasticsearch://" + ip + ":9300")))
+  def this(ip: String, port: Int, clusterName: String, indexName: String){
+    this(ElasticClient.remote(ImmutableSettings.settingsBuilder().put("cluster.name", clusterName).build(),
+      ElasticsearchClientUri("elasticsearch://" + ip + ":9300")),     indexName)
   }
 
 
@@ -72,7 +73,7 @@ class ElasticsearchPersistor(val client: ElasticClient) {
      val resp = client.execute {
        bulk(
          for(tweet<-tweets) yield {
-           index into "myanalyzed" / "tweet" fields (tweet) id tweet("id")
+           index into indexName / "tweet" fields (tweet) id tweet("id")
          }
            )
        }
@@ -86,8 +87,9 @@ class ElasticsearchPersistor(val client: ElasticClient) {
 
 object ElasticsearchPersistor {
 
-  def persistTweetsFromMapMP(lines: Iterator[scala.collection.mutable.Map[String,Any]], ip:String, port:Int, clusterName: String) : Iterator[scala.collection.mutable.Map[String,Any]]= {
-    val persistor : ElasticsearchPersistor = new ElasticsearchPersistor(ip, port, clusterName)
+  def persistTweetsFromMapMP(lines: Iterator[scala.collection.mutable.Map[String,Any]], ip:String, port:Int,
+                             clusterName: String, indexName: String) : Iterator[scala.collection.mutable.Map[String,Any]]= {
+    val persistor : ElasticsearchPersistor = new ElasticsearchPersistor(ip, port, clusterName, indexName )
 
     for(line<-lines) yield {
       persistor.saveTweet(line.toMap)
@@ -105,8 +107,9 @@ object ElasticsearchPersistor {
 
   }
 
-  def persistTweetsFromMap(lines: Iterator[Map[String,Any]], ip:String, port:Int, clusterName: String) : Unit= {
-    val persistor : ElasticsearchPersistor = new ElasticsearchPersistor(ip, port, clusterName)
+  def persistTweetsFromMap(lines: Iterator[Map[String,Any]], ip:String, port:Int, clusterName: String,
+                            indexName: String) : Unit= {
+    val persistor : ElasticsearchPersistor = new ElasticsearchPersistor(ip, port, clusterName, indexName)
 
     val chunks = lines.grouped(100)
 
@@ -116,11 +119,12 @@ object ElasticsearchPersistor {
 
   }
 
-  def persistTweetsFromRDDmp(input: RDD[String], ip: String, port: Int, clusterName: String): RDD[String] = {
+  def persistTweetsFromRDDmp(input: RDD[String], ip: String, port: Int, clusterName: String,
+                              indexName: String): RDD[String] = {
     println("~~~~~~~~~~~~~~~~~going to persist")
     val temp = input.map(x=> JSON.parseFull(x).asInstanceOf[Some[Map[String,Any]]].getOrElse(Map[String,Any]())).map(x => collection.mutable.Map(x.toSeq: _*))
 
-    val temp2 = temp.mapPartitions(iter => persistTweetsFromMapMP(iter, ip, port, clusterName))
+    val temp2 = temp.mapPartitions(iter => persistTweetsFromMapMP(iter, ip, port, clusterName, indexName))
 
 
     temp2.mapPartitions(x => {
@@ -139,6 +143,8 @@ object ElasticsearchPersistor {
   }
 
   def formatTweet(tweet: Map[String,Any]) : Map[String, Any] = {
+
+    println("Formatting tweets")
     val rawTweet  = tweet("raw").asInstanceOf[Map[String,Any]]
     val projectId = tweet("project_id").asInstanceOf[Double].round.toInt
     Map("lang" -> tweet("lang").asInstanceOf[String],
@@ -147,11 +153,11 @@ object ElasticsearchPersistor {
         "text" -> tweet("text").asInstanceOf[String],
         "created_at" -> tweet("time").asInstanceOf[String],
         //"hashtags" -> record.getOrElse("hashtags", "").asInstanceOf[List[String]].toArray,
-        //"topics" -> record.getOrElse("topics", "").asInstanceOf[List[String]].toArray,
+        "topics" -> tweet.getOrElse("topics", List()).asInstanceOf[List[String]].toArray,
         "project" -> projectId,
-        //"concepts" -> record.getOrElse("concepts", "").asInstanceOf[List[String]].toArray,
+        "concepts" -> tweet.getOrElse("concepts", List()).asInstanceOf[List[String]].toArray,
         //"mentions" -> record.getOrElse("mentions", "").asInstanceOf[List[String]].toArray,
-        //"sentiment" -> record.getOrElse("sentiment", "").asInstanceOf[String],
+        "sentiment" -> tweet.getOrElse("sentiment", "").asInstanceOf[String],
         "tweet_id" -> rawTweet("id_str").asInstanceOf[String],
         "id" -> List(projectId, rawTweet("id_str").asInstanceOf[String]).mkString("_"),
         "url" -> tweet("url"),
@@ -166,13 +172,16 @@ object ElasticsearchPersistor {
   }
 
 
-  def persistTweetsFromRDD(input: RDD[String], ip: String, port: Int, clusterName: String): RDD[String] = {
+  def persistTweetsFromRDD(input: RDD[String], ip: String, port: Int, clusterName: String,
+                           indexName: String): RDD[String] = {
     println("~~~~~~~~~~~~~~~~~going to persist in " + "ip" + port.toString + "clusterName")
+    println("First to persist")
+    println(input.first)
     val parsedTweets = input.map(x=> JSON.parseFull(x).asInstanceOf[Some[Map[String,Any]]].getOrElse(Map[String,Any]()))
 
     val formattedTweets = parsedTweets.map(tweet => formatTweet(tweet))
 
-    formattedTweets.foreachPartition(iter => persistTweetsFromMap(iter, ip, port, clusterName))
+    formattedTweets.foreachPartition(iter => persistTweetsFromMap(iter, ip, port, clusterName, indexName))
 
     input
   }
@@ -182,7 +191,8 @@ object ElasticsearchPersistor {
     val ip = "mixednode2"
     val port = 9300
     val clusterName = "Mixedemotions Elasticsearch"
-    val persistor : ElasticsearchPersistor = new ElasticsearchPersistor(ip, port, clusterName)
+    val indexName = "myanalyzed"
+    val persistor : ElasticsearchPersistor = new ElasticsearchPersistor(ip, port, clusterName, indexName)
     val resp = persistor.client.execute {
       index into "myanalyzed" / "test" fields(
 

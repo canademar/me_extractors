@@ -18,6 +18,8 @@ Serializable{
 
   def extractConceptsFromRDD(input: RDD[String]): RDD[String] = {
 
+    println("!111111111111111111111 Extract concpets from rdd")
+
     val temp = input.map(x=> JSON.parseFull(x).asInstanceOf[Some[Map[String,Any]]].getOrElse(Map[String, Any]())).map(x => collection.mutable.Map(x.toSeq: _*))
 
     val temp2 = extractConcepts(temp)

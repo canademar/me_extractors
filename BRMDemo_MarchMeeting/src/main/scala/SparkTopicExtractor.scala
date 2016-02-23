@@ -35,6 +35,8 @@ class SparkTopicExtractor(taxonomy: Map[String,List[String]]) extends Serializab
 
   def extractTopicsFromRDD(input: RDD[String]): RDD[String] = {
 
+    println("!22222222222222222222 Extract topics from RDD")
+
     val orig = input.map(x=> JSON.parseFull(x).asInstanceOf[Some[Map[String,Any]]].getOrElse(Map[String, Any]()))
       .map(x => collection.mutable.Map(x.toSeq: _*)).map(x => extractTopicsFromMap(x))
 

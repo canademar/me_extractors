@@ -11,7 +11,7 @@ object SparkOrchestrator {
   //val confFilePath = "/home/cnavarro/workspace/mixedemotions/me_extractors/BRMDemo_MarchMeeting/src/main/resources/cnavarro.conf"
   val confFilePath = "/home/cnavarro/me_extractors/BRMDemo_MarchMeeting/src/main/resources/production.conf"
 
-  val masterConfiguration : Config = {
+  /*val masterConfiguration : Config = {
     val parsedConf = ConfigFactory.parseFile(new File(confFilePath))
     ConfigFactory.load(parsedConf)
     /*val conf = ConfigFactory.load(parsedConf)
@@ -21,19 +21,58 @@ object SparkOrchestrator {
         "sent_en" ->conf.getString("conf.sent_en"))*/
 
 
+  }*/
+
+  /*final val configurationMap : Map[String, String] = {
+    val confFile = new File(confFilePath)
+    val parsedConf = ConfigFactory.parseFile(confFile)
+    val conf = ConfigFactory.load(parsedConf)
+    Map("languages" -> conf.getStringList("languages").toArray.mkString(","),
+        "modules" -> conf.getStringList("modules").toArray.mkString(","),
+        "entities_en.conf_path" -> conf.getString("entities_en.conf_path"),
+        "topic_es.taxonomy_path" -> conf.getString("topic_es.taxonomy_path"),
+        "concept_es.taxonomy_path" -> conf.getString("concept_es.taxonomy_path"),
+        "sent_en.resources_folder" ->conf.getString("sent_en.resources_folder"),
+        "elasticsearch.ip" ->conf.getString( "elasticsearch.ip"),
+        "elasticsearch.port" ->conf.getString( "elasticsearch.port"),
+        "elasticsearch.clusterName" ->conf.getString( "elasticsearch.clusterName"),
+        "elasticsearch.indexName" ->conf.getString( "elasticsearch.indexName")
+    )
+  }*/
+
+  final val configurationMap : Map[String, String] = {
+    val confFile = new File(confFilePath)
+    val parsedConf = ConfigFactory.parseFile(confFile)
+    val conf = ConfigFactory.load(parsedConf)
+    Map("languages" -> "es,en",
+      //"modules" -> "topic_es,concept_es,sent_en,persistor",
+      "modules" -> "concept_es,topic_es,sent_en,persistor",
+      "entities_en.conf_path" -> "/var/data/resources/nuig_entity_linking/ie.nuig.me.nel.properties" ,
+      "topic_es.taxonomy_path" -> "hdfs:///user/stratio/repository/example_taxonomy.json",
+      "concept_es.taxonomy_path" -> "hdfs://192.168.1.12:8020/user/stratio/repository/pagelinks_all.tsv",
+      //"concept_es.taxonomy_path" -> "/var/data/resources/pt_concepts",
+      "sent_en.resources_folder" -> "/var/data/resources/nuig_sentiment/",
+      "elasticsearch.ip" -> "192.168.1.12",
+      "elasticsearch.port" -> "9300",
+      "elasticsearch.clusterName" -> "Mixedemotions Elasticsearch",
+      "elasticsearch.indexName" -> "myanalyzed"
+    )
   }
 
   def main (args: Array[String]) {
 
     // Pipeline configuration
     //val mods = Array("concept_es", "topic_es", "sent_en", "entities_en")
+    val configuration = configurationMap
     //val mods : Array[String] = masterConfiguration.getStringList("modules").toArray(Array())
-    val mods = Array("persistor")
+    val mods : Array[String] = configuration("modules").split(",").reverse
+    //val mods = Array("persistor")
 
 
     // Spark configuration and context
-    val sparkConf = new SparkConf(true).setAppName("demoBRM").setMaster("mesos://192.168.1.12:5050")//.setMaster("local[*]")
+    //val sparkConf = new SparkConf(true).setAppName("demoBRM").setMaster("mesos://192.168.1.12:5050")//.setMaster("local[*]")
     //val sparkConf = new SparkConf(true).setAppName("demoBRM").setMaster("local[*]")
+    val sparkConf = new SparkConf(true).setAppName("demoBRM")
     val sc = new SparkContext(sparkConf)
 
     // Loading data
@@ -52,7 +91,8 @@ object SparkOrchestrator {
 
     //val initData = sc.textFile("/home/cnavarro/workspace/mixedemotions/data/2016-02-07_02-18-35_1")
     //val initData = sc.textFile("/home/cnavarro/workspace/mixedemotions/data/2016-02-07/BBVA/2016-02-07_19-21-27_1")
-    val initData = sc.textFile("hdfs:///user/stratio/data/projects/1/2016-02-01/twitter/2016-02-01_21-31-20_1")
+    //val initData = sc.textFile("hdfs:///user/stratio/data/projects/1/2016-02-01/twitter/2016-02-01_21-31-20_1")
+    val initData = sc.textFile("hdfs:///user/stratio/data/projects/1/2016-02-01/twitter/")
     //val data = initData.union(addData)
     val data = initData
 
@@ -89,17 +129,19 @@ object SparkOrchestrator {
     }
 
     val results = resultJSON.collect()
-    for(result <- resultJSON.collect()){
+    println("First------------------------------------")
+    println(results.head)
+    /*for(result <- resultJSON.collect()){
       print("Result: ")
       println(result)
-    }
+    }*/
 
 
   }
 
   def findMixEmModule(mod: String): RDD[String] => RDD[String] = {
 
-    mod match {
+    mod.trim match {
       case "topic_es" => topicextractor_spanish
 
       case "concept_es" => conceptextractor_spanish
@@ -119,7 +161,8 @@ object SparkOrchestrator {
 
     val sc = x.sparkContext
 
-    val taxonomyPath = masterConfiguration.getString("conf.topic_es.taxonomy_path")
+    //val taxonomyPath = masterConfiguration.getString("conf.topic_es.taxonomy_path")
+    val taxonomyPath = configurationMap("topic_es.taxonomy_path")
 
     println("Conf ok. Going. Topci_extractor taxonomy path:" + taxonomyPath)
 
@@ -128,7 +171,11 @@ object SparkOrchestrator {
 
     val mySparkTopicExtractor = new SparkTopicExtractor(tax)
 
-    mySparkTopicExtractor.extractTopicsFromRDD(x)
+    val result = mySparkTopicExtractor.extractTopicsFromRDD(x)
+
+    println("Finished topic extractor")
+
+    result
 
   }
 
@@ -138,7 +185,8 @@ object SparkOrchestrator {
 
     val sc = x.sparkContext
 
-    val taxonomyPath = masterConfiguration.getString("conf.concept_es.taxonomy_path")
+    //val taxonomyPath = masterConfiguration.getString("conf.concept_es.taxonomy_path")
+    val taxonomyPath = configurationMap("concept_es.taxonomy_path")
     //val taxonomyPath = "hdfs:///user/stratio/repository/pagelinks_all.tsv"
 
     println("Conf ok. Going. Concept extractor taxonomy path:" + taxonomyPath)
@@ -148,7 +196,11 @@ object SparkOrchestrator {
 
     val conceptExtractor = new SparkConceptExtractor(tax, 400, 10)
 
-    conceptExtractor.extractConceptsFromRDD(x)
+    val result = conceptExtractor.extractConceptsFromRDD(x)
+
+    println("Finished concepts")
+
+    result
 
   }
 
@@ -174,11 +226,12 @@ object SparkOrchestrator {
     val esPort = 9300
     val esClusterName = "Mixedemotions Elasticsearch"
     */
-    val esIP = masterConfiguration.getString("conf.elasticsearch.ip")
-    val esPort = masterConfiguration.getInt("conf.elasticsearch.port")
-    val esClusterName = masterConfiguration.getString("conf.elasticsearch.clusterName")
+    val esIP = configurationMap("elasticsearch.ip")
+    val esPort = configurationMap("elasticsearch.port").toInt
+    val esClusterName = configurationMap("elasticsearch.clusterName")
+    val indexName = configurationMap("elasticsearch.indexName")
 
-    ElasticsearchPersistor.persistTweetsFromRDD(_, esIP, esPort , esClusterName)
+    ElasticsearchPersistor.persistTweetsFromRDD(_, esIP, esPort , esClusterName, indexName)
 
 
   }

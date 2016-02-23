@@ -1,9 +1,11 @@
+/*
 import ie.nuig.entitylinking.core.AnnotatedMention
 import ie.nuig.entitylinking.core.ELDocument
 import ie.nuig.entitylinking.main.nel.EntityLinkingMain
 
 import java.util.List
 import scala.collection.JavaConversions._
+
 
 
 
@@ -40,5 +42,6 @@ object NUIGEntityLinkingTest {
   }
 }
 
+*/
 
 
