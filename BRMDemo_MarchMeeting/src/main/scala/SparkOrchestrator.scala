@@ -46,10 +46,11 @@ object SparkOrchestrator {
     val conf = ConfigFactory.load(parsedConf)
     Map("languages" -> "es,en",
       //"modules" -> "topic_es,concept_es,sent_en,persistor",
-      "modules" -> "concept_es,topic_es,sent_en,persistor",
+      //"modules" -> "concept_es,topic_es,sent_en,persistor",
+      "modules" -> "emotions,upm_sent,persistor",
       "entities_en.conf_path" -> "/var/data/resources/nuig_entity_linking/ie.nuig.me.nel.properties" ,
       "topic_es.taxonomy_path" -> "hdfs:///user/stratio/repository/example_taxonomy.json",
-      "concept_es.taxonomy_path" -> "hdfs://192.168.1.12:8020/user/stratio/repository/pagelinks_all.tsv",
+      "concept_es.taxonomy_path" -> "hdfs://mixedemotions/user/stratio/repository/pagelinks_all.tsv",
       //"concept_es.taxonomy_path" -> "/var/data/resources/pt_concepts",
       "sent_en.resources_folder" -> "/var/data/resources/nuig_sentiment/",
       "elasticsearch.ip" -> "192.168.1.12",
@@ -79,13 +80,13 @@ object SparkOrchestrator {
 
     println("Starting  -------")
 
-    /*val addData = sc.parallelize(Array("{\"text\": \"I hate western movies with John Wayne\", \"nots\": [\"hola\"], \"lang\": \"en\"}",
+    val addData = sc.parallelize(Array("{\"text\": \"I hate western movies with John Wayne\", \"nots\": [\"hola\"], \"lang\": \"en\"}",
       "{ \"text\": \"Really nice car\", \"nots\": [\"hola\"], \"lang\": \"en\"}",
       "{ \"text\": \"The new Star Wars film is really nasty. You will not enjoy it anyway\", \"nots\": [\"hola\"], \"lang\": \"en\"}",
       "{ \"text\": \"The new Star Wars film is awesome, but maybe it is just for fans. You will not enjoy it anyway\", \"nots\": [\"hola\"], \"lang\": \"en\"}",
       "{ \"text\": \"Hola ke ace?\", \"nots\": [\"hola\"], \"lang\": \"es\"}",
       "{ \"text\": \"La nueva de Star Wars está muy bien. Me encantó el robot pelota.\", \"nots\": [\"hola\"], \"lang\": \"es\"}"))
-      */
+
 
 
 
@@ -95,6 +96,7 @@ object SparkOrchestrator {
     val initData = sc.textFile("hdfs:///user/stratio/data/projects/1/2016-02-01/twitter/")
     //val data = initData.union(addData)
     val data = initData
+    //val data = addData
 
     // The NOT filter is initially applied tot he data
     val mydata = NotsFilter.filterText(data)
@@ -121,12 +123,12 @@ object SparkOrchestrator {
     val resultEn = resultJSON.map(x=> JSON.parseFull(x).asInstanceOf[Some[Map[String,Any]]].getOrElse(Map[String,Any]())).filter(x=> x.getOrElse("lang","").asInstanceOf[String]=="en")
 
 
-    if (resultEn.count()>0){
+    /*if (resultEn.count()>0){
       println(resultEn.first())
     }
     else{
       println("No data in english found")
-    }
+    }*/
 
     val results = resultJSON.collect()
     println("First------------------------------------")
@@ -148,8 +150,12 @@ object SparkOrchestrator {
 
       case "sent_en" => sentimentextractor_english
 
+      case "upm_sent" => upm_sentiment_extractor
+
      //  case "entities_en" => entitylinking_english
       case "persistor" => elasticsearch_persistor
+
+      case "emotions" => emotion_extractor
     }
 
   }
@@ -220,6 +226,14 @@ object SparkOrchestrator {
     NUIGEntityLinkingExtractor.extractEntityLinkingFromRDD(_, confPath)
   }
   */
+
+  val emotion_extractor: RDD[String] => RDD[String] = {
+    UPMEmotionAnalysisService.processViaRestService(_)
+  }
+
+  val upm_sentiment_extractor: RDD[String] => RDD[String] = {
+    UPMSentimentAnalysisService.processViaRestService(_)
+  }
 
   val elasticsearch_persistor: RDD[String] => RDD[String] = {
     /*val esIP = "mixednode2"
