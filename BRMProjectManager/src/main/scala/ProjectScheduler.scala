@@ -1,14 +1,73 @@
-import java.io.File
+import java.io.{FileWriter, BufferedWriter, File}
 import java.util.{Date, Timer}
+import org.joda.time.{Period, Duration, DateTime}
+
+import scala.io.Source
+import scala.collection.JavaConversions._
 
 import com.typesafe.config.ConfigFactory
+import org.apache.spark.launcher.SparkLauncher
+
 import launchers.PTCrawlerLauncher
 
-import scala.collection.JavaConversions._
+
 
 object ProjectScheduler {
 
   def main(args: Array[String]) {
+    reprocessFolders()
+  }
+
+  def reprocessFolders(): Unit ={
+    val folderList = Source.fromFile("/home/cnavarro/folders_sorted.txt").getLines
+    //val folderList = Source.fromFile("./src/main/resources/folders_sorted.txt").getLines
+    val file = new File("scheduler.log")
+    val bw = new BufferedWriter(new FileWriter(file))
+    bw.write("Starting\n")
+
+    for(folder<-folderList){
+      val start = DateTime.now()
+      println(s"${start.toString} - Going to process folder ${folder}")
+      bw.write(s"${start.toString} - Going to process folder ${folder}\n")
+      try{
+        sparkLaunch(folder)
+        val spent = new Period(DateTime.now, start)
+
+        println(s"Success! Took ${spent} with folder ${folder}")
+        bw.write(s"Success! Took ${spent} with folder ${folder}\n")
+
+      }catch {
+        case e :Exception =>{
+          println(s"Error executing folder: ${folder}")
+          println(e)
+          println(e.getStackTrace)
+          bw.write(s"Error executing folder ${folder}\n")
+          bw.write(e.toString +"\n")
+          bw.write(e.getStackTrace.toString + "\n")
+        }
+      }
+    }
+    bw.close()
+
+
+  }
+
+
+  def sparkLaunch(folderPath: String):Unit = {
+
+    val spark = new SparkLauncher()
+      .setSparkHome("/opt/sds/spark/")
+      .setAppResource("/home/cnavarro/BRMDemo_MarchMeeting-assembly-1.4.9.jar")
+      .setMainClass("SparkOrchestrator")
+      .setMaster("mesos://192.168.1.12:5050")
+      .setConf(SparkLauncher.EXECUTOR_MEMORY, "9g")
+      .setConf(SparkLauncher.EXECUTOR_CORES, "9")
+      .addAppArgs(folderPath)
+      .launch()
+    spark.waitFor()
+  }
+
+  def schedule(): Unit ={
     val startDate = new Date()
     //val epoch : Long = 1454544 * 1000000
     //startDate.setTime(epoch)

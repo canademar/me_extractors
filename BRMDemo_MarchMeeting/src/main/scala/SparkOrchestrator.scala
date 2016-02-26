@@ -47,9 +47,9 @@ object SparkOrchestrator {
     Map("languages" -> "es,en",
       //"modules" -> "topic_es,concept_es,sent_en,persistor",
       //"modules" -> "concept_es,topic_es,sent_en,persistor",
-      "modules" -> "emotions,upm_sent,persistor",
+      "modules" -> "topic_es,concept_es,upm_sent, emotions",
       "entities_en.conf_path" -> "/var/data/resources/nuig_entity_linking/ie.nuig.me.nel.properties" ,
-      "topic_es.taxonomy_path" -> "hdfs:///user/stratio/repository/example_taxonomy.json",
+      "topic_es.taxonomy_path" -> "hdfs://mixedemotions/user/stratio/repository/example_taxonomy.json",
       "concept_es.taxonomy_path" -> "hdfs://mixedemotions/user/stratio/repository/pagelinks_all.tsv",
       //"concept_es.taxonomy_path" -> "/var/data/resources/pt_concepts",
       "sent_en.resources_folder" -> "/var/data/resources/nuig_sentiment/",
@@ -76,6 +76,7 @@ object SparkOrchestrator {
     val sparkConf = new SparkConf(true).setAppName("demoBRM")
     val sc = new SparkContext(sparkConf)
 
+
     // Loading data
 
     println("Starting  -------")
@@ -93,7 +94,13 @@ object SparkOrchestrator {
     //val initData = sc.textFile("/home/cnavarro/workspace/mixedemotions/data/2016-02-07_02-18-35_1")
     //val initData = sc.textFile("/home/cnavarro/workspace/mixedemotions/data/2016-02-07/BBVA/2016-02-07_19-21-27_1")
     //val initData = sc.textFile("hdfs:///user/stratio/data/projects/1/2016-02-01/twitter/2016-02-01_21-31-20_1")
-    val initData = sc.textFile("hdfs:///user/stratio/data/projects/1/2016-02-01/twitter/")
+    //val initData = sc.textFile("hdfs:///user/stratio/data/projects/1/2016-02-01/twitter/")
+    val inputPath = args(0)
+    println(s"Going to process $inputPath")
+    //val initData = sc.textFile(inputPath)
+    val folderData = sc.wholeTextFiles(inputPath)
+    val filesData = folderData.map(pair=> pair._2)
+    val initData = filesData.flatMap(_.split("\n"))
     //val data = initData.union(addData)
     val data = initData
     //val data = addData
@@ -117,10 +124,14 @@ object SparkOrchestrator {
 
     println("Got result json")
 
+    //println("Num results: " +resultJSON.count.toString)
 
 
+    val collected = resultJSON.collect
+    persistWithoutSpark(collected)
+    println("Num results: " + collected.length.toString)
 
-    val resultEn = resultJSON.map(x=> JSON.parseFull(x).asInstanceOf[Some[Map[String,Any]]].getOrElse(Map[String,Any]())).filter(x=> x.getOrElse("lang","").asInstanceOf[String]=="en")
+    //val resultEn = resultJSON.map(x=> JSON.parseFull(x).asInstanceOf[Some[Map[String,Any]]].getOrElse(Map[String,Any]())).filter(x=> x.getOrElse("lang","").asInstanceOf[String]=="en")
 
 
     /*if (resultEn.count()>0){
@@ -129,10 +140,12 @@ object SparkOrchestrator {
     else{
       println("No data in english found")
     }*/
+    //val parsedResult = resultJSON.map(x=> JSON.parseFull(x).asInstanceOf[Some[Map[String,Any]]].getOrElse(Map[String,Any]()))
 
-    val results = resultJSON.collect()
-    println("First------------------------------------")
-    println(results.head)
+    //val results = parsedResult.collect()
+    //println("First------------------------------------")
+    //val first = results.head
+    //println(first - "raw")
     /*for(result <- resultJSON.collect()){
       print("Result: ")
       println(result)
@@ -153,7 +166,7 @@ object SparkOrchestrator {
       case "upm_sent" => upm_sentiment_extractor
 
      //  case "entities_en" => entitylinking_english
-      case "persistor" => elasticsearch_persistor
+     // case "persistor" => elasticsearch_persistor
 
       case "emotions" => emotion_extractor
     }
@@ -228,14 +241,14 @@ object SparkOrchestrator {
   */
 
   val emotion_extractor: RDD[String] => RDD[String] = {
-    UPMEmotionAnalysisService.processViaRestService(_)
+    UPMEmotionAnalysisService.process(_)
   }
 
   val upm_sentiment_extractor: RDD[String] => RDD[String] = {
-    UPMSentimentAnalysisService.processViaRestService(_)
+    UPMSentimentAnalysisService.process(_)
   }
 
-  val elasticsearch_persistor: RDD[String] => RDD[String] = {
+  /*val elasticsearch_persistor: RDD[String] => RDD[String] = {
     /*val esIP = "mixednode2"
     val esPort = 9300
     val esClusterName = "Mixedemotions Elasticsearch"
@@ -245,7 +258,28 @@ object SparkOrchestrator {
     val esClusterName = configurationMap("elasticsearch.clusterName")
     val indexName = configurationMap("elasticsearch.indexName")
 
-    ElasticsearchPersistor.persistTweetsFromRDD(_, esIP, esPort , esClusterName, indexName)
+    println("Going to persist")
+
+
+    ElasticsearchPersistor.persistTweetsFromRDDmp(_, esIP, esPort , esClusterName, indexName)
+
+
+  }*/
+
+  def persistWithoutSpark(tweets : Array[String]): Unit =  {
+    /*val esIP = "mixednode2"
+    val esPort = 9300
+    val esClusterName = "Mixedemotions Elasticsearch"
+    */
+    val esIP = configurationMap("elasticsearch.ip")
+    val esPort = configurationMap("elasticsearch.port").toInt
+    val esClusterName = configurationMap("elasticsearch.clusterName")
+    val indexName = configurationMap("elasticsearch.indexName")
+
+    println("Going to persist")
+
+
+    ElasticsearchPersistor.persistTweetsWithoutSpark(tweets.toList, esIP, esPort , esClusterName, indexName)
 
 
   }

@@ -144,7 +144,7 @@ object ElasticsearchPersistor {
 
   def formatTweet(tweet: Map[String,Any]) : Map[String, Any] = {
 
-    println("Formatting tweets")
+
     val rawTweet  = tweet("raw").asInstanceOf[Map[String,Any]]
     val projectId = tweet("project_id").asInstanceOf[Double].round.toInt
     Map("lang" -> tweet("lang").asInstanceOf[String],
@@ -177,8 +177,8 @@ object ElasticsearchPersistor {
   def persistTweetsFromRDD(input: RDD[String], ip: String, port: Int, clusterName: String,
                            indexName: String): RDD[String] = {
     println("~~~~~~~~~~~~~~~~~going to persist in " + "ip" + port.toString + "clusterName")
-    println("First to persist")
-    println(input.first)
+
+
     val parsedTweets = input.map(x=> JSON.parseFull(x).asInstanceOf[Some[Map[String,Any]]].getOrElse(Map[String,Any]()))
 
     val formattedTweets = parsedTweets.map(tweet => formatTweet(tweet))
@@ -186,6 +186,25 @@ object ElasticsearchPersistor {
     formattedTweets.foreachPartition(iter => persistTweetsFromMap(iter, ip, port, clusterName, indexName))
 
     input
+  }
+
+  def persistTweetsWithoutSpark(input: List[String], ip: String, port: Int, clusterName: String,
+                           indexName: String): Unit = {
+    println("~~~~~~~~~~~~~~~~~going to persist in " + "ip" + port.toString + "clusterName")
+
+
+    val parsedTweets = input.map(x=> JSON.parseFull(x).asInstanceOf[Some[Map[String,Any]]].getOrElse(Map[String,Any]()))
+
+    val formattedTweets = parsedTweets.map(tweet => formatTweet(tweet))
+
+    val persistor : ElasticsearchPersistor = new ElasticsearchPersistor(ip, port, clusterName, indexName)
+
+    val chunks = formattedTweets.grouped(100)
+
+    for(chunk<-chunks) {
+      persistor.saveTweets(chunk)
+    }
+
   }
 
 

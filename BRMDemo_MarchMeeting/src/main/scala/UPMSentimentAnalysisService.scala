@@ -12,7 +12,7 @@ import scalaj.http.{HttpResponse, _}
 object UPMSentimentAnalysisService {
 
   // The elements of the original RDD are separately processed. the mapPartitions method is used to optimize performance
-  def processViaRestService(input: RDD[String]): RDD[String] = {
+  def process(input: RDD[String]): RDD[String] = {
     val temp = input.map(x=> JSON.parseFull(x).asInstanceOf[Some[Map[String,Any]]].getOrElse(Map[String,Any]())).map(x => collection.mutable.Map(x.toSeq: _*))
 
     val sentimented = temp.mapPartitions(x => extractSentiment(x))
@@ -42,27 +42,24 @@ object UPMSentimentAnalysisService {
   def extractSentiment(input: scala.collection.mutable.Map[String,Any]) : scala.collection.mutable.Map[String,Any] = {
      val query = composeQuery(input)
       println(query)
-      val response = executeGetRequest(query)
-      val sentiment = getSentimentFromResponse(response)
-      collection.mutable.Map(sentiment.toSeq: _*)
+     try {
+       val response = NetworkAnalysisService.executeGetRequest(query)
+       val sentiment = getSentimentFromResponse(response)
+       collection.mutable.Map(sentiment.toSeq: _*)
+     }catch {
+       case e: Exception => {
+         collection.mutable.Map("polarity"-> "Neutral", "value"->0)
+       }
+
+     }
+
+
   }
 
   // Each request involves the composition of a query to the service. Inthis case, the query is delivered to the DW API
   def composeQuery(input: scala.collection.mutable.Map[String,Any]): String = {
     val encodedText = URLEncoder.encode(input("text").toString, "UTF-8")
     s"http://senpy.demos.gsi.dit.upm.es/api/?i=${encodedText}&lang=${input("lang")}"
-  }
-
-
-  // Each query is delivered to the service and the response is stored
-  def executeGetRequest(query: String): Map[String,Any] = {
-    // The REST service is queried and the response (JSON format) is obtained
-    val response: HttpResponse[String] = Http(query).timeout(connTimeoutMs = 10000, readTimeoutMs = 50000).asString
-    if (response.isError) {
-      throw new Exception(s"HttpError: $query . ${response.body} ${response.code}")
-    }
-    val body = response.body
-    JSON.parseFull(body).asInstanceOf[Some[Map[String,Any]]].getOrElse(Map[String,Any]())
   }
 
   def getSentimentFromResponse(input: Map[String,Any]) : Map[String, Any] = {
@@ -79,6 +76,7 @@ object UPMSentimentAnalysisService {
     }
   }
 
+
   def main(args: Array[String]) {
     val inputs = Array("{\"text\": \"I hate western movies with John Wayne\", \"nots\": [\"hola\"], \"lang\": \"en\"}",
       "{ \"text\": \"Really nice car\", \"nots\": [\"hola\"], \"lang\": \"en\"}",
@@ -92,7 +90,7 @@ object UPMSentimentAnalysisService {
       val mutableMap = collection.mutable.Map(inputMap.toSeq: _*)
       val query = composeQuery(mutableMap)
       println(query)
-      val response = executeGetRequest(query)
+      val response = NetworkAnalysisService.executeGetRequest(query)
       val sentiment = getSentimentFromResponse(response)
       println(sentiment)
     }

@@ -1,5 +1,6 @@
 import org.apache.spark.rdd.RDD
 
+import scala.util.parsing.json.JSON
 import scalaj.http.{HttpResponse, _}
 
 class NetworkAnalysisService {
@@ -40,5 +41,23 @@ class NetworkAnalysisService {
     }
     queryResponse.iterator
   }
+
+}
+
+object NetworkAnalysisService {
+  // Each query is delivered to the service and the response is stored
+  def executeGetRequest(query: String): Map[String,Any] = {
+    // The REST service is queried and the response (JSON format) is obtained
+    println("Waiting")
+    Thread.sleep(500)
+    val response: HttpResponse[String] = Http(query).timeout(connTimeoutMs = 10000, readTimeoutMs = 50000).asString
+    if (response.isError) {
+      throw new Exception(s"HttpError: $query . ${response.body} ${response.code}")
+    }
+    val body = response.body
+    JSON.parseFull(body).asInstanceOf[Some[Map[String,Any]]].getOrElse(Map[String,Any]())
+  }
+
+
 
 }

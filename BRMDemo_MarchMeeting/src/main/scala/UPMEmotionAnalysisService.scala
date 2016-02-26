@@ -14,7 +14,7 @@ import scala.util.parsing.json.JSON
 object UPMEmotionAnalysisService {
 
   // The elements of the original RDD are separately processed. the mapPartitions method is used to optimize performance
-  def processViaRestService(input: RDD[String]): RDD[String] = {
+  def process(input: RDD[String]): RDD[String] = {
     val temp = input.map(x=> JSON.parseFull(x).asInstanceOf[Some[Map[String,Any]]].getOrElse(Map[String,Any]())).map(x => collection.mutable.Map(x.toSeq: _*))
 
     val emotioned = temp.mapPartitions(x => extractEmotions(x))
@@ -43,7 +43,7 @@ object UPMEmotionAnalysisService {
   def extractEmotions(input: scala.collection.mutable.Map[String,Any]) : scala.collection.mutable.Map[String,Any] = {
      val query = composeQuery(input)
       println(query)
-      val response = executeGetRequest(query)
+      val response = NetworkAnalysisService.executeGetRequest(query)
       val emotions = getEmotionsFromResponse(response)
       collection.mutable.Map(emotions.toSeq: _*)
   }
@@ -54,17 +54,6 @@ object UPMEmotionAnalysisService {
     s"http://senpy.demos.gsi.dit.upm.es/api/?i=${encodedText}&lang=${input("lang")}&algo=EmoTextANEW"
   }
 
-
-  // Each query is delivered to the service and the response is stored
-  def executeGetRequest(query: String): Map[String,Any] = {
-    // The REST service is queried and the response (JSON format) is obtained
-    val response: HttpResponse[String] = Http(query).timeout(connTimeoutMs = 10000, readTimeoutMs = 50000).asString
-    if (response.isError) {
-      throw new Exception(s"HttpError: $query . ${response.body} ${response.code}")
-    }
-    val body = response.body
-    JSON.parseFull(body).asInstanceOf[Some[Map[String,Any]]].getOrElse(Map[String,Any]())
-  }
 
   def getEmotionsFromResponse(input: Map[String,Any]) : Map[String, Any] = {
     val entries = input.getOrElse("entries", List()).asInstanceOf[List[Map[String, Any]]]
@@ -97,7 +86,7 @@ object UPMEmotionAnalysisService {
       val mutableMap = collection.mutable.Map(inputMap.toSeq: _*)
       val query = composeQuery(mutableMap)
       println(query)
-      val response = executeGetRequest(query)
+      val response = NetworkAnalysisService.executeGetRequest(query)
       val emotions = getEmotionsFromResponse(response)
       println(emotions)
     }

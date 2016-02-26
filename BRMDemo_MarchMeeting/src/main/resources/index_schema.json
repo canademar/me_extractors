@@ -32,8 +32,28 @@
         "created_at": {
           "type": "date",
           "format": "yyyyMMddHHmmss"
+        },
+        "emotions": {
+          "properties": {
+            "arousal": {
+              "type": "double"
+            },
+            "category": {
+              "type": "string",
+              "index": "not_analyzed"
+            },
+            "dominance": {
+              "type": "double"
+            },
+            "emotion": {
+              "type": "string",
+              "index": "not_analyzed"
+            },
+            "valence": {
+              "type": "double"
+            }
+          }
         }
-
       }
     }
   }
