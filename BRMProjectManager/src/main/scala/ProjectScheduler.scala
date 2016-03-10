@@ -1,4 +1,5 @@
 import java.io.{FileWriter, BufferedWriter, File}
+import java.text.SimpleDateFormat
 import java.util.{Date, Timer}
 import org.joda.time.{Period, Duration, DateTime}
 
@@ -8,17 +9,44 @@ import scala.collection.JavaConversions._
 import com.typesafe.config.ConfigFactory
 import org.apache.spark.launcher.SparkLauncher
 
-import launchers.PTCrawlerLauncher
+import launchers.{DummyLauncher, ReprocessLauncher, PTCrawlerLauncher}
 
 
 
 object ProjectScheduler {
 
   def main(args: Array[String]) {
-    reprocessFolders()
+
+    val t: Timer = new Timer
+    val period = 3600*24*1000
+    //val confData = confReader("/opt/sds/mixedemotions/BRMProjectManager/conf/projects.conf")
+
+    val sdf = new SimpleDateFormat("yyyy-MM-dd'T'hh:mm:ss'Z'")
+    val reprocessStartDate : Date = sdf.parse("2016-01-01T16:44:00Z")
+    val ptCrawlerStartDate : Date = sdf.parse("2016-01-01T21:40:00Z")
+
+
+    //val reprocessLauncher = new ReprocessLauncher("/home/cnavarro/folders_sorted.txt")
+    //t.schedule(reprocessLauncher, reprocessStartDate, period)
+    val dummyLauncher = new DummyLauncher()
+    t.schedule(dummyLauncher, reprocessStartDate, 10000)
+
+
+
+
+    /*val paradigma_script_path = confData("paradigma_crawler_path").asInstanceOf[String]
+    val pt_temp_conf_path = confData("paradigma_temp_conf_path").asInstanceOf[String]
+    val projects_conf_path = confData("projects_conf_path").asInstanceOf[String]
+    val ptCrawlerLauncher = new PTCrawlerLauncher(paradigma_script_path, projects_conf_path, pt_temp_conf_path)
+    t.schedule(ptCrawlerLauncher, ptCrawlerStartDate, period)
+    */
+
+
+
+
   }
 
-  def reprocessFolders(): Unit ={
+  /*def reprocessFolders(): Unit ={
     val folderList = Source.fromFile("/home/cnavarro/folders_sorted.txt").getLines
     //val folderList = Source.fromFile("./src/main/resources/folders_sorted.txt").getLines
     val file = new File("scheduler.log")
@@ -65,7 +93,7 @@ object ProjectScheduler {
       .addAppArgs(folderPath)
       .launch()
     spark.waitFor()
-  }
+  }*/
 
   def schedule(): Unit ={
     val startDate = new Date()
@@ -75,12 +103,12 @@ object ProjectScheduler {
 
 
     // Recovering conf data
-    val confData = confReader("/opt/sds/mixedemotions/BRMProjectManager/conf/application2.conf")
+    val confData = confReader("/opt/sds/mixedemotions/BRMProjectManager/conf/projects.conf")
     //val confData = confReader("/home/cnavarro/workspace/mixedemotions/me_extractors/BRMProjectManager/src/main/resources/application.conf")
     //val confData = confReader("application.conf")
 
-    val keywords = confData.get("keywords").asInstanceOf[Some[List[String]]].getOrElse(List[String](""))
-    val forbiddenkeywords = confData.get("forbidden_keywords").asInstanceOf[Some[List[String]]].getOrElse(List[String](""))
+    //val keywords = confData.get("keywords").asInstanceOf[Some[List[String]]].getOrElse(List[String](""))
+    //val forbiddenkeywords = confData.get("forbidden_keywords").asInstanceOf[Some[List[String]]].getOrElse(List[String](""))
     val period = confData.get("period").asInstanceOf[Some[Long]].get
 
     // Launching the task (crawling + processing) every period milliseconds
