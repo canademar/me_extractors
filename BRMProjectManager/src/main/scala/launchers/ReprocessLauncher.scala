@@ -30,12 +30,13 @@ class ReprocessLauncher(foldersToReprocessPath: String) extends TimerTask {
       println(s"${start.toString} - Going to process folder ${folder}")
       bw.write(s"${start.toString} - Going to process folder ${folder}\n")
       try {
-        val sparkLaunched = MEOrchestratorLauncher.launchOrchestratorAndWait(folder)
+        val launchedStatus : Int = MEOrchestratorLauncher.launchOrchestratorAndWait(folder)
 
         val spent = new Period(DateTime.now, start)
-
-        println(s"Success! Took ${spent} with folder ${folder}")
-        bw.write(s"Success! Took ${spent} with folder ${folder}\n")
+        if(launchedStatus==0) {
+          println(s"Success! Status ${launchedStatus}  Took ${spent} (${spent.getHours}:${spent.getMinutes}:${spent.getSeconds}) with folder ${folder}")
+          bw.write(s"Success! Status ${launchedStatus} Took ${spent} (${spent.getHours}:${spent.getMinutes}:${spent.getSeconds}) with folder ${folder}\n")
+        }
 
       } catch {
         case e: Exception => {
@@ -48,6 +49,9 @@ class ReprocessLauncher(foldersToReprocessPath: String) extends TimerTask {
         }
       }
     }
+    val end = DateTime.now()
+    println(s"${end.toString} - Finished reprocessing")
+    bw.write(s"${end.toString} - Finished reprocessing\n")
     bw.close()
   }
 

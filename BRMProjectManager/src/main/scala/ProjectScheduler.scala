@@ -6,30 +6,68 @@ import org.joda.time.{Period, Duration, DateTime}
 import scala.io.Source
 import scala.collection.JavaConversions._
 
-import com.typesafe.config.ConfigFactory
+import scala.concurrent.{Await, ExecutionContext, Future}
+import scala.concurrent.duration._
+
+import com.typesafe.config.{Config, ConfigFactory}
 import org.apache.spark.launcher.SparkLauncher
 
-import launchers.{DummyLauncher, ReprocessLauncher, PTCrawlerLauncher}
+import ExecutionContext.Implicits.global
+
+import launchers._
 
 
 
 object ProjectScheduler {
 
+
+  /*val configuration : Config = {
+    val confFile = new File("application.conf")
+    val parsedConf = ConfigFactory.parseFile(confFile)
+    ConfigFactory.load(parsedConf)
+  }*/
+
+  def pathConfiguration(path: String) : Config = {
+    val confFile = new File(path)
+    val parsedConf = ConfigFactory.parseFile(confFile)
+    ConfigFactory.load(parsedConf)
+  }
+
+
   def main(args: Array[String]) {
 
+    if(args.length==0){
+      throw new Exception("Missing configuration path argument")
+    }
+
+    schedulerMain(args(0))
+
+  }
+
+  def schedulerMain(confPath : String) : Unit= {
+
     val t: Timer = new Timer
-    val period = 3600*24*1000
-    //val confData = confReader("/opt/sds/mixedemotions/BRMProjectManager/conf/projects.conf")
+    //val period = 3600*24*1000
+    val conf = pathConfiguration(confPath)
+
+
+    val period = conf.getInt("hours_period")*3600*1000
 
     val sdf = new SimpleDateFormat("yyyy-MM-dd'T'hh:mm:ss'Z'")
     val reprocessStartDate : Date = sdf.parse("2016-01-01T16:44:00Z")
+    val processStartDate : Date = sdf.parse("2016-01-01T04:44:00Z")
     val ptCrawlerStartDate : Date = sdf.parse("2016-01-01T21:40:00Z")
 
 
-    //val reprocessLauncher = new ReprocessLauncher("/home/cnavarro/folders_sorted.txt")
+    //val reprocessLauncher = new ReprocessLauncher(conf.getString("folders_to_reprocess"))
     //t.schedule(reprocessLauncher, reprocessStartDate, period)
-    val dummyLauncher = new DummyLauncher()
-    t.schedule(dummyLauncher, reprocessStartDate, 10000)
+
+    val projectIds : List[String] = conf.getString("project_ids").split(',').toList
+    val dailyProcessLauncher = new DailyProcessLauncher(conf.getString("hdfs_data_folder"), projectIds)
+    t.schedule(dailyProcessLauncher, processStartDate, period)
+    //val dummyLauncher = new DummyLauncher()
+    //t.schedule(dummyLauncher, reprocessStartDate, 10000)
+
 
 
 
@@ -46,56 +84,11 @@ object ProjectScheduler {
 
   }
 
-  /*def reprocessFolders(): Unit ={
-    val folderList = Source.fromFile("/home/cnavarro/folders_sorted.txt").getLines
-    //val folderList = Source.fromFile("./src/main/resources/folders_sorted.txt").getLines
-    val file = new File("scheduler.log")
-    val bw = new BufferedWriter(new FileWriter(file))
-    bw.write("Starting\n")
-
-    for(folder<-folderList){
-      val start = DateTime.now()
-      println(s"${start.toString} - Going to process folder ${folder}")
-      bw.write(s"${start.toString} - Going to process folder ${folder}\n")
-      try{
-        sparkLaunch(folder)
-        val spent = new Period(DateTime.now, start)
-
-        println(s"Success! Took ${spent} with folder ${folder}")
-        bw.write(s"Success! Took ${spent} with folder ${folder}\n")
-
-      }catch {
-        case e :Exception =>{
-          println(s"Error executing folder: ${folder}")
-          println(e)
-          println(e.getStackTrace)
-          bw.write(s"Error executing folder ${folder}\n")
-          bw.write(e.toString +"\n")
-          bw.write(e.getStackTrace.toString + "\n")
-        }
-      }
-    }
-    bw.close()
 
 
-  }
 
 
-  def sparkLaunch(folderPath: String):Unit = {
-
-    val spark = new SparkLauncher()
-      .setSparkHome("/opt/sds/spark/")
-      .setAppResource("/home/cnavarro/BRMDemo_MarchMeeting-assembly-1.4.9.jar")
-      .setMainClass("SparkOrchestrator")
-      .setMaster("mesos://192.168.1.12:5050")
-      .setConf(SparkLauncher.EXECUTOR_MEMORY, "9g")
-      .setConf(SparkLauncher.EXECUTOR_CORES, "9")
-      .addAppArgs(folderPath)
-      .launch()
-    spark.waitFor()
-  }*/
-
-  def schedule(): Unit ={
+  def schedule(conf: Config): Unit ={
     val startDate = new Date()
     //val epoch : Long = 1454544 * 1000000
     //startDate.setTime(epoch)
@@ -103,7 +96,8 @@ object ProjectScheduler {
 
 
     // Recovering conf data
-    val confData = confReader("/opt/sds/mixedemotions/BRMProjectManager/conf/projects.conf")
+    //val confData = projectConfReader("/opt/sds/mixedemotions/BRMProjectManager/conf/projects.conf")
+    val confData = projectConfReader(conf.getString("projects_conf_path"))
     //val confData = confReader("/home/cnavarro/workspace/mixedemotions/me_extractors/BRMProjectManager/src/main/resources/application.conf")
     //val confData = confReader("application.conf")
 
@@ -128,7 +122,7 @@ object ProjectScheduler {
   }
 
 
-  def confReader(confFile: String) : scala.collection.mutable.Map[String, Any] = {
+  def projectConfReader(confFile: String) : scala.collection.mutable.Map[String, Any] = {
 
     val output = scala.collection.mutable.Map[String, Any]()
 
@@ -159,5 +153,7 @@ object ProjectScheduler {
 
     output.asInstanceOf[scala.collection.mutable.Map[String, Any]]
   }
+
+
 
 }
