@@ -11,17 +11,17 @@ import scala.io.Source
 import scala.sys.process.{ProcessLogger, _}
 
 
-class ReprocessLauncher(foldersToReprocessPath: String) extends TimerTask {
+class ReprocessLauncher(orchestratorLauncher: MEOrchestratorLauncher, foldersToReprocessPath: String, reprocessLogPath: String) extends TimerTask {
 
   def run {
     println("Going to reprocess stuff")
-    reprocessFolders(foldersToReprocessPath)
+    reprocessFolders(foldersToReprocessPath, reprocessLogPath)
 
   }
 
-  def reprocessFolders(foldersToReprocessPath: String): Unit = {
+  def reprocessFolders(foldersToReprocessPath: String, reprocessLogPath: String): Unit = {
     val folderList = Source.fromFile(foldersToReprocessPath).getLines
-    val file = new File("scheduler.log")
+    val file = new File(reprocessLogPath)
     val bw = new BufferedWriter(new FileWriter(file))
     bw.write("Starting\n")
 
@@ -30,44 +30,35 @@ class ReprocessLauncher(foldersToReprocessPath: String) extends TimerTask {
       println(s"${start.toString} - Going to process folder ${folder}")
       bw.write(s"${start.toString} - Going to process folder ${folder}\n")
       try {
-        val launchedStatus : Int = MEOrchestratorLauncher.launchOrchestratorAndWait(folder)
+        val launchedStatus : Int = orchestratorLauncher.launchOrchestratorAndWait(folder)
 
-        val spent = new Period(DateTime.now, start)
+        val spent = new Period(start, DateTime.now)
         if(launchedStatus==0) {
-          println(s"Success! Status ${launchedStatus}  Took ${spent} (${spent.getHours}:${spent.getMinutes}:${spent.getSeconds}) with folder ${folder}")
-          bw.write(s"Success! Status ${launchedStatus} Took ${spent} (${spent.getHours}:${spent.getMinutes}:${spent.getSeconds}) with folder ${folder}\n")
+          println(s"Success! Status ${launchedStatus}  Took ${spent.getHours}:${spent.getMinutes}:${spent.getSeconds} with folder ${folder}")
+          bw.write(s"Success! Status ${launchedStatus} Took ${spent.getHours}:${spent.getMinutes}:${spent.getSeconds} with folder ${folder}\n")
+        }else{
+          println(s"Error ${launchedStatus}  after (${spent.getHours}:${spent.getMinutes}:${spent.getSeconds}) with folder ${folder}")
+          bw.write(s"Error ${launchedStatus} after ${spent} (${spent.getHours}:${spent.getMinutes}:${spent.getSeconds}) with folder ${folder}\n")
         }
+        println("----------------------------------")
+        bw.write("---------------------------------\n")
 
       } catch {
         case e: Exception => {
           println(s"Error executing folder: ${folder}")
           println(e)
-          println(e.getStackTrace)
+          println(e.getMessage)
           bw.write(s"Error executing folder ${folder}\n")
           bw.write(e.toString + "\n")
-          bw.write(e.getStackTrace.toString + "\n")
+          bw.write(e.getMessage + "\n")
         }
       }
     }
     val end = DateTime.now()
-    println(s"${end.toString} - Finished reprocessing")
-    bw.write(s"${end.toString} - Finished reprocessing\n")
+    println(s"${end.toString} - Finished reprocessing\n")
+    bw.write(s"${end.toString} - Finished reprocessing\n\n")
     bw.close()
   }
-
-
-
-
-  /*def sparkLauncher():Unit = {
-
-    val spark = new SparkLauncher()
-      .setSparkHome("/opt/sds/spark/")
-      .setAppResource("/home/jvmarcos/DummySparkApp-assembly-1.0.jar")
-      .setMainClass("DummySparkApp")
-      .setMaster("mesos://192.168.1.12:5050")
-      .launch()
-    spark.waitFor()
-  }*/
 
 
 }

@@ -11,7 +11,8 @@ import com.typesafe.config.{Config, ConfigFactory}
 import scala.io.Source
 
 
-class DailyProcessLauncher(baseFolder: String, projectIds: List[String]) extends TimerTask {
+class DailyProcessLauncher(orchestratorLauncher: MEOrchestratorLauncher, baseFolder: String, projectIds: List[String],
+                            dailyProcessorLogPath: String) extends TimerTask {
 
 
   def run {
@@ -41,7 +42,7 @@ class DailyProcessLauncher(baseFolder: String, projectIds: List[String]) extends
   }
 
   def processFolders(foldersToProcess: List[String]): Unit = {
-    val file = new File("dailyProcessor.log")
+    val file = new File(dailyProcessorLogPath)
     val bw = new BufferedWriter(new FileWriter(file))
     bw.write("Starting\n")
 
@@ -50,22 +51,27 @@ class DailyProcessLauncher(baseFolder: String, projectIds: List[String]) extends
       println(s"${start.toString} - Going to process folder ${folder}")
       bw.write(s"${start.toString} - Going to process folder ${folder}\n")
       try {
-        val launchedStatus : Int = MEOrchestratorLauncher.launchOrchestratorAndWait(folder)
+        val launchedStatus : Int = orchestratorLauncher.launchOrchestratorAndWait(folder)
 
-        val spent = new Period(DateTime.now, start)
+        val spent = new Period(start, DateTime.now)
         if(launchedStatus==0) {
-          println(s"Success! Status ${launchedStatus}  Took ${spent} (${spent.getHours}:${spent.getMinutes}:${spent.getSeconds}) with folder ${folder}")
-          bw.write(s"Success! Status ${launchedStatus} Took ${spent} (${spent.getHours}:${spent.getMinutes}:${spent.getSeconds}) with folder ${folder}\n")
+          println(s"Success! Status ${launchedStatus}  Took ${spent.getHours}:${spent.getMinutes}:${spent.getSeconds} with folder ${folder}")
+          bw.write(s"Success! Status ${launchedStatus} Took ${spent.getHours}:${spent.getMinutes}:${spent.getSeconds} with folder ${folder}\n")
+        }else{
+          println(s"-->Error!!! Status ${launchedStatus}  Took ${spent.getHours}:${spent.getMinutes}:${spent.getSeconds} with folder ${folder}")
+          bw.write(s"-->Error!!! Status ${launchedStatus} Took ${spent.getHours}:${spent.getMinutes}:${spent.getSeconds} with folder ${folder}\n")
         }
+        println("----------\n")
+        bw.write("----------\n\n")
 
       } catch {
         case e: Exception => {
           println(s"Error executing folder: ${folder}")
           println(e)
-          println(e.getStackTrace)
+          println(e.getMessage)
           bw.write(s"Error executing folder ${folder}\n")
           bw.write(e.toString + "\n")
-          bw.write(e.getStackTrace.toString + "\n")
+          bw.write(e.getMessage + "\n")
         }
       }
     }
@@ -78,14 +84,4 @@ class DailyProcessLauncher(baseFolder: String, projectIds: List[String]) extends
 
 }
 
-object DailyProcessLauncher {
-  def main(args: Array[String]) {
-    val ids = List("1")
-    val baseFolder = "/user/stratio/"
-    val daily : DailyProcessLauncher = new DailyProcessLauncher(baseFolder, ids)
-    daily.run
-    println(daily.getFoldersToProcess())
-
-  }
-}
 
