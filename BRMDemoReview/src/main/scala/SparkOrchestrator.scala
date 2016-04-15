@@ -1,17 +1,21 @@
 import java.text.Normalizer
+import java.io.File
 
 import org.apache.spark.rdd.RDD
 import org.apache.spark.{SparkConf, SparkContext}
+import com.typesafe.config.{ConfigFactory,Config}
 
 import scala.util.parsing.json.JSON
+import scala.collection.JavaConversions._
 
 object SparkOrchestrator {
-  //val confFilePath = "/home/cnavarro/workspace/mixedemotions/me_extractors/BRMDemo_MarchMeeting/src/main/resources/cnavarro.conf"
-  val confFilePath = "/home/cnavarro/me_extractors/BRMDemo_MarchMeeting/src/main/resources/production.conf"
+  //val confFilePath = "/home/cnavarro/workspace/mixedemotions/me_extractors/BRMDemoReview/src/main/resources/cnavarro.conf"
+  val confFilePath = "/home/cnavarro/projectManager/conf/production.conf"
 
+  /*
   final val configurationMap : Map[String, String] = {
     Map("languages" -> "es,en",
-      "modules" -> "sent_en, topic_es, entities_en",
+      "modules" -> "sent_en, topic_es, entities_en, persistor",
       "entities_en.conf_path" -> "/var/data/resources/nuig_entity_linking/ie.nuig.me.nel.properties" ,
       "topic_es.taxonomy_path" -> "hdfs://mixedemotions/user/stratio/repository/example_taxonomy.json",
       "concept_es.taxonomy_path" -> "hdfs://mixedemotions/user/stratio/repository/pagelinks_all.tsv",
@@ -23,12 +27,30 @@ object SparkOrchestrator {
       "entities_en.conf_path" -> "/var/data/resources/nuig_entity_linking/ie.nuig.me.nel.properties"
     )
   }
+  */
+
+  val configurationMap : Config = {
+    println(s"ConfFile: ${confFilePath}")
+    val confFile = new File(confFilePath)
+    val parsedConf = ConfigFactory.parseFile(confFile)
+    ConfigFactory.load(parsedConf)
+    /*Map("languages" -> conf.getStringList("languages").toArray.mkString(","),
+      "modules" -> conf.getStringList("modules").toArray.mkString(","),
+      "entities_en.conf_path" -> conf.getString("entities_en.conf_path"),
+      "topic_es.taxonomy_path" -> conf.getString("topic_es.taxonomy_path"),
+      "concept_es.taxonomy_path" -> conf.getString("concept_es.taxonomy_path"),
+      "sent_en.resources_folder" ->conf.getString("sent_en.resources_folder"),
+      "elasticsearch.ip" ->conf.getString( "elasticsearch.ip"),
+      "elasticsearch.port" ->conf.getString( "elasticsearch.port"),
+      "elasticsearch.clusterName" ->conf.getString( "elasticsearch.clusterName"),
+      "elasticsearch.indexName" ->conf.getString( "elasticsearch.indexName")
+    )*/
+  }
 
   def main (args: Array[String]) {
 
     // Pipeline configuration
-    val configuration = configurationMap
-    val mods : Array[String] = configuration("modules").split(",").reverse
+    val mods : List[String] = configurationMap.getStringList("modules").toList.reverse
     mods.foreach(mod=>println("\n\n--------mod: " + mod + " -----------\n\n"))
     //val mods = Array("persistor")
 
@@ -78,7 +100,7 @@ object SparkOrchestrator {
     val filesData = folderData.map(pair=> pair._2)
     val initData = filesData.flatMap(_.split("\n"))
     //val data = initData.union(addData)
-    val data = initData.union(addData)
+    val data = initData
 
     println("\nTotal number of raw data to process: " + data.count() + "\n")
 
@@ -132,7 +154,7 @@ object SparkOrchestrator {
 
       case "entities_en" => entitylinking_english
 
-     // case "persistor" => elasticsearch_persistor
+      case "persistor" => elasticsearch_persistor
 
       case "emotions" => emotion_extractor
 
@@ -147,7 +169,7 @@ object SparkOrchestrator {
     val sc = x.sparkContext
 
     //val taxonomyPath = masterConfiguration.getString("conf.topic_es.taxonomy_path")
-    val taxonomyPath = configurationMap("topic_es.taxonomy_path")
+    val taxonomyPath = configurationMap.getString("topic_es.taxonomy_path")
 
     val tax = JSON.parseFull(sc.textFile(taxonomyPath).collect().foldLeft("")(_.concat(_))).get.asInstanceOf[Map[String,List[String]]]
     //val tax = JSON.parseFull(sc.textFile("/home/jvmarcos/Escritorio/example_taxonomy.json").collect().foldLeft("")(_.concat(_))).get.asInstanceOf[Map[String,List[String]]]
@@ -169,7 +191,7 @@ object SparkOrchestrator {
     val sc = x.sparkContext
 
     //val taxonomyPath = masterConfiguration.getString("conf.concept_es.taxonomy_path")
-    val taxonomyPath = configurationMap("concept_es.taxonomy_path")
+    val taxonomyPath = configurationMap.getString("concept_es.taxonomy_path")
     //val taxonomyPath = "hdfs:///user/stratio/repository/pagelinks_all.tsv"
 
     val tax = parseTaxonomy(sc, taxonomyPath)
@@ -185,16 +207,6 @@ object SparkOrchestrator {
 
   }
 
-  /*
-  val sentimentextractor_english: RDD[String] => RDD[String] = {
-    println("Sentiment extractor")
-    //val resourcesFolder = masterConfiguration.getString("conf.sent_en.resources_folder")
-    val resourcesFolder = "/var/data/resources/nuig_sentiment/"
-    println("******Got resources folder " + resourcesFolder)
-    SparkSentiment.extractSentimentFromRDD(_, resourcesFolder)
-  }
-  */
-
   val sentimentextractor_english: RDD[String] => RDD[String] = (x:RDD[String]) => {
     println("Going to sentiment extractor")
     //val resourcesFolder = masterConfiguration.getString("conf.sent_en.resources_folder")
@@ -205,17 +217,10 @@ object SparkOrchestrator {
   }
 
 
-/*
-  val entitylinking_english: RDD[String] => RDD[String] = {
-    println("Entity linking")
-    val confPath = configurationMap("entities_en.conf_path")
-    NUIGEntityLinkingExtractor.extractEntityLinkingFromRDD(_, confPath)
-  }
-  */
 
   val entitylinking_english: RDD[String] => RDD[String] = (x:RDD[String]) => {
     println("Entity linking")
-    val confPath = configurationMap("entities_en.conf_path")
+    val confPath = configurationMap.getString("entities_en.conf_path")
     val result = NUIGEntityLinkingExtractor.extractEntityLinkingFromRDD(x, confPath)
     println("Entity linking finished")
     result
@@ -230,15 +235,12 @@ object SparkOrchestrator {
     UPMSentimentAnalysisService.process(_)
   }
 
-  /*val elasticsearch_persistor: RDD[String] => RDD[String] = {
-    /*val esIP = "mixednode2"
-    val esPort = 9300
-    val esClusterName = "Mixedemotions Elasticsearch"
-    */
-    val esIP = configurationMap("elasticsearch.ip")
-    val esPort = configurationMap("elasticsearch.port").toInt
-    val esClusterName = configurationMap("elasticsearch.clusterName")
-    val indexName = configurationMap("elasticsearch.indexName")
+  val elasticsearch_persistor: RDD[String] => RDD[String] = {
+
+    val esIP = configurationMap.getString("elasticsearch.ip")
+    val esPort = configurationMap.getString("elasticsearch.port").toInt
+    val esClusterName = configurationMap.getString("elasticsearch.clusterName")
+    val indexName = configurationMap.getString("elasticsearch.indexName")
 
     println("Going to persist")
 
@@ -246,17 +248,17 @@ object SparkOrchestrator {
     ElasticsearchPersistor.persistTweetsFromRDDmp(_, esIP, esPort , esClusterName, indexName)
 
 
-  }*/
+  }
 
   def persistWithoutSpark(tweets : Array[String]): Unit =  {
     /*val esIP = "mixednode2"
     val esPort = 9300
     val esClusterName = "Mixedemotions Elasticsearch"
     */
-    val esIP = configurationMap("elasticsearch.ip")
-    val esPort = configurationMap("elasticsearch.port").toInt
-    val esClusterName = configurationMap("elasticsearch.clusterName")
-    val indexName = configurationMap("elasticsearch.indexName")
+    val esIP = configurationMap.getString("elasticsearch.ip")
+    val esPort = configurationMap.getString("elasticsearch.port").toInt
+    val esClusterName = configurationMap.getString("elasticsearch.clusterName")
+    val indexName = configurationMap.getString("elasticsearch.indexName")
 
     println("Going to persist")
 

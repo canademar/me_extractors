@@ -61,7 +61,10 @@ object NUIGEntityLinkingExtractor {
      val text = line.getOrElse("text", "").asInstanceOf[String]
      val lang = line.getOrElse("lang", "").asInstanceOf[String]
      if (text.length > 0 && lang.equals("en")) {
-       line += ("entities" -> entityLinker.extractConcepts(text))
+       val extractedConcept = entityLinker.extractConcepts(text)
+       line += ("entities" -> extractedConcept.map(x=>x("entity")))
+       line += ("topics" -> extractedConcept.map(x=>x("entityClass")))
+       line += ("linkedEntities"-> extractedConcept)
      } else {
        line += ("entities" -> Map())
      }

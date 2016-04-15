@@ -50,16 +50,26 @@ object SparkSentiment {
       val lang = line.getOrElse("lang","").asInstanceOf[String]
       if(text.length>0 && lang.equals("en")){
         //line + (("sentiment", sentimenter.classify(text)))
-        line += ("sentiment"-> sentimenter.classify(text))
+        val polarity = sentimenter.classify(text).toLowerCase
+        line += ("polarity"-> polarity, "sentiment"->getSentimentScore(polarity))
         //Map("_source"->(line.getOrElse("_source", Map[String,String]()).asInstanceOf[Map[String,String]] + (("sentiment", sentimenter.classify(text)))))
       }else{
-        line += ("sentiment"-> "None")
+        line += ("polarity"-> "neutral", "sentiment"->0)
       }
     }
 
 
   }
-  
+
+  def getSentimentScore(polarity: String) : Double = {
+    if(polarity=="positive"){
+      1.0
+    }else if(polarity=="negative"){
+      -1.0
+    }else{
+      0
+    }
+  }
 
   def extractSentimentFromRDD(input: RDD[String], resourcesFolder: String): RDD[String] = {
 
