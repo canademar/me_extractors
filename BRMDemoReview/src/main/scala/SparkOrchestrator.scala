@@ -121,12 +121,12 @@ object SparkOrchestrator {
 
     println("\nNumber of items after processing (resultJSON): " + numResultJSON + "\n")
 
-    //val collected = resultJSON.collect
-    //println("Reactivate persistence")
-    //persistWithoutSpark(collected)
-    //println("Num results: " + collected.length.toString)
+    val collected = resultJSON.collect
+    println("Reactivate persistence")
+    persistWithoutSpark(collected)
+    println("Num results: " + collected.length.toString)
 
-    val resultEn = resultJSON.map(x=> JSON.parseFull(x).asInstanceOf[Some[Map[String,Any]]].getOrElse(Map[String,Any]())).filter(x=> x.getOrElse("lang","").asInstanceOf[String]=="en")
+    /*val resultEn = resultJSON.map(x=> JSON.parseFull(x).asInstanceOf[Some[Map[String,Any]]].getOrElse(Map[String,Any]())).filter(x=> x.getOrElse("lang","").asInstanceOf[String]=="en")
     val numResultEn = resultEn.count()
 
     println("\nNumber of items (in english) after processing (resultEn): " + numResultEn + "\n")
@@ -138,6 +138,7 @@ object SparkOrchestrator {
     else{
       println("No data in english found")
     }
+    */
 
   }
 
@@ -158,9 +159,22 @@ object SparkOrchestrator {
 
       case "emotions" => emotion_extractor
 
+      case s if s.startsWith("docker") => docker_service(s)
+
     }
 
   }
+
+  def docker_service(dockerName:String): RDD[String] => RDD[String] = {
+    val serviceName = dockerName.replace("docker_","docker_")
+    val confPath = configurationMap.getString("docker_conf_folder")
+    val discoveryService = new MarathonServiceDiscovery(configurationMap.getString("mesos_dns.ip"), configurationMap.getInt("mesos_dns.port"))
+    val service = DockerService.dockerServiceFromConfFile(confPath, discoveryService)
+    service.process
+
+  }
+
+
 
   val topicextractor_spanish: RDD[String] => RDD[String] = (x: RDD[String]) => {
 
@@ -228,11 +242,11 @@ object SparkOrchestrator {
 
 
   val emotion_extractor: RDD[String] => RDD[String] = {
-    UPMEmotionAnalysisService.process(_)
+    UPMEmotionAnalysisService.process(_, configurationMap.getString("upm_sent.service_host"))
   }
 
   val upm_sentiment_extractor: RDD[String] => RDD[String] = {
-    UPMSentimentAnalysisService.process(_)
+    UPMSentimentAnalysisService.process(_, configurationMap.getString("upm_emotions.service_host"))
   }
 
   val elasticsearch_persistor: RDD[String] => RDD[String] = {

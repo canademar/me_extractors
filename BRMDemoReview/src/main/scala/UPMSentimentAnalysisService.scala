@@ -11,10 +11,10 @@ import scala.util.parsing.json.JSON
 object UPMSentimentAnalysisService {
 
   // The elements of the original RDD are separately processed. the mapPartitions method is used to optimize performance
-  def process(input: RDD[String]): RDD[String] = {
+  def process(input: RDD[String], serviceHost: String): RDD[String] = {
     val temp = input.map(x=> JSON.parseFull(x).asInstanceOf[Some[Map[String,Any]]].getOrElse(Map[String,Any]())).map(x => collection.mutable.Map(x.toSeq: _*))
 
-    val sentimented = temp.mapPartitions(x => extractSentiment(x))
+    val sentimented = temp.mapPartitions(x => extractSentiment(x, serviceHost))
 
     sentimented.mapPartitions(x => {
 
@@ -31,18 +31,22 @@ object UPMSentimentAnalysisService {
 
   }
 
-  def extractSentiment(input: Iterator[scala.collection.mutable.Map[String,Any]]) : Iterator[scala.collection.mutable.Map[String,Any]] = {
+  def extractSentiment(input: Iterator[scala.collection.mutable.Map[String,Any]], serviceHost: String) : Iterator[scala.collection.mutable.Map[String,Any]] = {
     for(entry<-input) yield {
-      val sentiment = extractSentiment(entry)
-      entry + ("sentiment" -> sentiment("value"), "polarity"-> sentiment("polarity"))
+      val sentiment = extractSentiment(entry, serviceHost)
+      if (sentiment != Map()) {
+        entry +("sentiment" -> sentiment("value"), "polarity" -> sentiment("polarity"))
+      } else {
+        entry
+      }
     }
   }
 
-  def extractSentiment(input: scala.collection.mutable.Map[String,Any]) : scala.collection.mutable.Map[String,Any] = {
-     val query = composeQuery(input)
+  def extractSentiment(input: scala.collection.mutable.Map[String,Any], serviceHost: String) : scala.collection.mutable.Map[String,Any] = {
+     val query = composeQuery(input, serviceHost)
       println(query)
      try {
-       val response = NetworkAnalysisService.executeGetRequest(query)
+       val response = NetworkAnalysisService.executeGetRequest(query).asInstanceOf[Map[String,Any]]
        val sentiment = getSentimentFromResponse(response)
        collection.mutable.Map(sentiment.toSeq: _*)
      }catch {
@@ -56,9 +60,10 @@ object UPMSentimentAnalysisService {
   }
 
   // Each request involves the composition of a query to the service. Inthis case, the query is delivered to the DW API
-  def composeQuery(input: scala.collection.mutable.Map[String,Any]): String = {
+  def composeQuery(input: scala.collection.mutable.Map[String,Any], serviceHost: String): String = {
     val encodedText = URLEncoder.encode(input("text").toString, "UTF-8")
-    s"http://senpy.demos.gsi.dit.upm.es/api/?i=${encodedText}&lang=${input("lang")}"
+    //s"http://senpy.demos.gsi.dit.upm.es/api/?i=${encodedText}&lang=${input("lang")}"
+    s"http://${serviceHost}/api/?i=${encodedText}&lang=${input("lang")}"
   }
 
   def getSentimentFromResponse(input: Map[String,Any]) : Map[String, Any] = {
@@ -69,7 +74,7 @@ object UPMSentimentAnalysisService {
       val entry = entries.head
       val sentDict =  entry("sentiments").asInstanceOf[List[Map[String,Any]]].head
       val sentimentPolarity = sentDict("marl:hasPolarity").asInstanceOf[String].replace("marl:","")
-      val sentimentValue = sentDict("marl:polarityValue").asInstanceOf[String].toInt
+      val sentimentValue = sentDict.getOrElse("marl:polarityValue",sentDict("marL:polarityValue")).asInstanceOf[Double].toInt
       val sentiment = Map("polarity"->sentimentPolarity, "value"-> sentimentValue)
       sentiment
     }
@@ -87,9 +92,9 @@ object UPMSentimentAnalysisService {
     for(input<-inputs){
       val inputMap = JSON.parseFull(input).asInstanceOf[Some[Map[String,Any]]].getOrElse(Map[String,Any]())
       val mutableMap = collection.mutable.Map(inputMap.toSeq: _*)
-      val query = composeQuery(mutableMap)
+      val query = composeQuery(mutableMap, "senpy.cluster.gsi.dit.upm.es")
       println(query)
-      val response = NetworkAnalysisService.executeGetRequest(query)
+      val response = NetworkAnalysisService.executeGetRequest(query).asInstanceOf[Map[String,Any]]
       val sentiment = getSentimentFromResponse(response)
       println(sentiment)
     }

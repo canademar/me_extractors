@@ -152,7 +152,7 @@ object ElasticsearchPersistor {
         "concepts" -> tweet.getOrElse("concepts", List()).asInstanceOf[List[String]].toArray,
         //"mentions" -> record.getOrElse("mentions", "").asInstanceOf[List[String]].toArray,
         "emotions" -> tweet.getOrElse("emotions", Map()).asInstanceOf[Map[String,Any]],
-        "sentiment" -> tweet.getOrElse("sentiment", "").asInstanceOf[Double],
+        "sentiment" -> tweet.getOrElse("sentiment", 0.0).asInstanceOf[Double],
         "polarity" -> tweet.getOrElse("polarity", "").asInstanceOf[String],
         "tweet_id" -> rawTweet("id_str").asInstanceOf[String],
         "id" -> List(projectId, rawTweet("id_str").asInstanceOf[String]).mkString("_"),

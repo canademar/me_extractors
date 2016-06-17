@@ -46,16 +46,35 @@ class NetworkAnalysisService {
 
 object NetworkAnalysisService {
   // Each query is delivered to the service and the response is stored
-  def executeGetRequest(query: String): Map[String,Any] = {
+  def executeGetRequest(query: String): Any = {
     // The REST service is queried and the response (JSON format) is obtained
     println("Waiting")
     Thread.sleep(500)
-    val response: HttpResponse[String] = Http(query).timeout(connTimeoutMs = 10000, readTimeoutMs = 50000).asString
-    if (response.isError) {
-      throw new Exception(s"HttpError: $query . ${response.body} ${response.code}")
+    try {
+      val response: HttpResponse[String] = Http(query).timeout(connTimeoutMs = 10000, readTimeoutMs = 50000).asString
+      if (response.isError) {
+        println(s"HttpError: $query . ${response.body} ${response.code}")
+        Map()
+      }
+      val body = response.body
+      val jsoned = JSON.parseFull(body)
+      val toMatch = jsoned.getOrElse(None)
+      toMatch match {
+      case None => {
+        if (body.length != 0) {
+          body
+        } else {
+          Map()
+        }
+      }
+      case x: Any => x
     }
-    val body = response.body
-    JSON.parseFull(body).asInstanceOf[Some[Map[String,Any]]].getOrElse(Map[String,Any]())
+    }catch{
+      case e: Exception => {
+        println("Unexpected error executing get request")
+        Map()
+      }
+    }
   }
 
 

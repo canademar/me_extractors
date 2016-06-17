@@ -11,10 +11,10 @@ import scala.util.parsing.json.JSON
 object UPMEmotionAnalysisService {
 
   // The elements of the original RDD are separately processed. the mapPartitions method is used to optimize performance
-  def process(input: RDD[String]): RDD[String] = {
+  def process(input: RDD[String], serviceHost: String): RDD[String] = {
     val temp = input.map(x=> JSON.parseFull(x).asInstanceOf[Some[Map[String,Any]]].getOrElse(Map[String,Any]())).map(x => collection.mutable.Map(x.toSeq: _*))
 
-    val emotioned = temp.mapPartitions(x => extractEmotions(x))
+    val emotioned = temp.mapPartitions(x => extractEmotions(x, serviceHost))
 
     emotioned.mapPartitions(x => {
 
@@ -31,24 +31,25 @@ object UPMEmotionAnalysisService {
 
   }
 
-  def extractEmotions(input: Iterator[scala.collection.mutable.Map[String,Any]]) : Iterator[scala.collection.mutable.Map[String,Any]] = {
+  def extractEmotions(input: Iterator[scala.collection.mutable.Map[String,Any]], serviceHost: String) : Iterator[scala.collection.mutable.Map[String,Any]] = {
     for(entry<-input) yield {
-      entry += ("emotions" -> extractEmotions(entry))
+      entry += ("emotions" -> extractEmotions(entry, serviceHost))
     }
   }
 
-  def extractEmotions(input: scala.collection.mutable.Map[String,Any]) : scala.collection.mutable.Map[String,Any] = {
-     val query = composeQuery(input)
+  def extractEmotions(input: scala.collection.mutable.Map[String,Any], serviceHost: String) : scala.collection.mutable.Map[String,Any] = {
+     val query = composeQuery(input, serviceHost)
       println(query)
-      val response = NetworkAnalysisService.executeGetRequest(query)
+      val response = NetworkAnalysisService.executeGetRequest(query).asInstanceOf[Map[String,Any]]
       val emotions = getEmotionsFromResponse(response)
       collection.mutable.Map(emotions.toSeq: _*)
   }
 
   // Each request involves the composition of a query to the service. Inthis case, the query is delivered to the DW API
-  def composeQuery(input: scala.collection.mutable.Map[String,Any]): String = {
+  def composeQuery(input: scala.collection.mutable.Map[String,Any], serviceHost: String): String = {
     val encodedText = URLEncoder.encode(input("text").toString, "UTF-8")
-    s"http://senpy.demos.gsi.dit.upm.es/api/?i=${encodedText}&lang=${input("lang")}&algo=EmoTextANEW"
+    //s"http://senpy.cluster.gsi.dit.upm.es/api/?i=${encodedText}&lang=${input("lang")}&algo=EmoTextANEW"
+    s"http://${serviceHost}/api/?i=${encodedText}&lang=${input("lang")}&algo=EmoTextANEW"
   }
 
 
@@ -81,9 +82,9 @@ object UPMEmotionAnalysisService {
     for(input<-inputs){
       val inputMap = JSON.parseFull(input).asInstanceOf[Some[Map[String,Any]]].getOrElse(Map[String,Any]())
       val mutableMap = collection.mutable.Map(inputMap.toSeq: _*)
-      val query = composeQuery(mutableMap)
+      val query = composeQuery(mutableMap, "senpy.cluster.gsi.dit.upm.es")
       println(query)
-      val response = NetworkAnalysisService.executeGetRequest(query)
+      val response = NetworkAnalysisService.executeGetRequest(query).asInstanceOf[Map[String,Any]]
       val emotions = getEmotionsFromResponse(response)
       println(emotions)
     }
