@@ -1,57 +1,36 @@
 import java.text.Normalizer
 import java.io.File
+import scala.util.parsing.json.JSON
+import scala.collection.JavaConversions._
 
+import org.slf4j.LoggerFactory
 import org.apache.spark.rdd.RDD
 import org.apache.spark.{SparkConf, SparkContext}
 import com.typesafe.config.{ConfigFactory,Config}
 
-import scala.util.parsing.json.JSON
-import scala.collection.JavaConversions._
+
 
 object SparkOrchestrator {
   //val confFilePath = "/home/cnavarro/workspace/mixedemotions/me_extractors/BRMDemoReview/src/main/resources/cnavarro.conf"
-  val confFilePath = "/home/cnavarro/projectManager/conf/production.conf"
+  val confFilePath = "/home/cnavarro/projectManager/conf/docker.conf"
+  val logger = LoggerFactory.getLogger(SparkOrchestrator.getClass)
 
-  /*
-  final val configurationMap : Map[String, String] = {
-    Map("languages" -> "es,en",
-      "modules" -> "sent_en, topic_es, entities_en, persistor",
-      "entities_en.conf_path" -> "/var/data/resources/nuig_entity_linking/ie.nuig.me.nel.properties" ,
-      "topic_es.taxonomy_path" -> "hdfs://mixedemotions/user/stratio/repository/example_taxonomy.json",
-      "concept_es.taxonomy_path" -> "hdfs://mixedemotions/user/stratio/repository/pagelinks_all.tsv",
-      "sent_en.resources_folder" -> "/var/data/resources/nuig_sentiment/",
-      "elasticsearch.ip" -> "192.168.1.12",
-      "elasticsearch.port" -> "9300",
-      "elasticsearch.clusterName" -> "Mixedemotions Elasticsearch",
-      "elasticsearch.indexName" -> "myanalyzed",
-      "entities_en.conf_path" -> "/var/data/resources/nuig_entity_linking/ie.nuig.me.nel.properties"
-    )
-  }
-  */
 
   val configurationMap : Config = {
     println(s"ConfFile: ${confFilePath}")
     val confFile = new File(confFilePath)
     val parsedConf = ConfigFactory.parseFile(confFile)
     ConfigFactory.load(parsedConf)
-    /*Map("languages" -> conf.getStringList("languages").toArray.mkString(","),
-      "modules" -> conf.getStringList("modules").toArray.mkString(","),
-      "entities_en.conf_path" -> conf.getString("entities_en.conf_path"),
-      "topic_es.taxonomy_path" -> conf.getString("topic_es.taxonomy_path"),
-      "concept_es.taxonomy_path" -> conf.getString("concept_es.taxonomy_path"),
-      "sent_en.resources_folder" ->conf.getString("sent_en.resources_folder"),
-      "elasticsearch.ip" ->conf.getString( "elasticsearch.ip"),
-      "elasticsearch.port" ->conf.getString( "elasticsearch.port"),
-      "elasticsearch.clusterName" ->conf.getString( "elasticsearch.clusterName"),
-      "elasticsearch.indexName" ->conf.getString( "elasticsearch.indexName")
-    )*/
   }
+
+
 
   def main (args: Array[String]) {
 
     // Pipeline configuration
     val mods : List[String] = configurationMap.getStringList("modules").toList.reverse
     mods.foreach(mod=>println("\n\n--------mod: " + mod + " -----------\n\n"))
+    mods.foreach(mod=>logger.info("\n\n--------Loading mod: " + mod + " -----------\n\n"))
     //val mods = Array("persistor")
 
 
@@ -65,6 +44,7 @@ object SparkOrchestrator {
     // Loading data
 
     println("\nLoading data  -------\n")
+    logger.info("\nStarting  -------\n")
 
     val addData = sc.parallelize(Array("{\"text\": \"I hate western movies with John Wayne\", \"nots\": [\"hola\"], \"lang\": \"en\"}",
       "{ \"text\": \"Really nice car\", \"nots\": [\"hola\"], \"lang\": \"en\"}",
@@ -81,7 +61,8 @@ object SparkOrchestrator {
         "\"nots\": [\"hola\", \"adios\"], \"lang\": \"en\"}",
       "{ \"text\": \"Please, pay attention to the next film by Tarantino. It's absolutely fantastic!\", \"nots\": " +
         "[\"hola\", \"adios\"], \"lang\": \"en\"}",
-      "{ \"text\": \"La nueva de Star Wars está muy bien. Me encantó el robot pelota.\", \"nots\": [\"hola\"], \"lang\": \"es\"}"))
+      "{ \"text\": \"La nueva de Star Wars está muy bien. Me encantó el robot pelota.\", \"nots\": [\"hola\"], \"lang\": \"es\"}",
+      "{ \"text\": \"El jefe se va a Endesa.\", \"nots\": [\"hola\"], \"lang\": \"es\"}"))
 
 
 
@@ -123,8 +104,10 @@ object SparkOrchestrator {
 
     val collected = resultJSON.collect
     println("Reactivate persistence")
-    persistWithoutSpark(collected)
+    //persistWithoutSpark(collected)
+    collected.map(println(_))
     println("Num results: " + collected.length.toString)
+
 
     /*val resultEn = resultJSON.map(x=> JSON.parseFull(x).asInstanceOf[Some[Map[String,Any]]].getOrElse(Map[String,Any]())).filter(x=> x.getOrElse("lang","").asInstanceOf[String]=="en")
     val numResultEn = resultEn.count()
@@ -166,8 +149,10 @@ object SparkOrchestrator {
   }
 
   def docker_service(dockerName:String): RDD[String] => RDD[String] = {
-    val serviceName = dockerName.replace("docker_","docker_")
-    val confPath = configurationMap.getString("docker_conf_folder")
+    val serviceName = dockerName.replace("docker_","")
+    val confFolder = configurationMap.getString("docker_conf_folder")
+    val confPath = confFolder + serviceName + ".conf"
+    println(s"Docker conf path: ${confPath}")
     val discoveryService = new MarathonServiceDiscovery(configurationMap.getString("mesos_dns.ip"), configurationMap.getInt("mesos_dns.port"))
     val service = DockerService.dockerServiceFromConfFile(confPath, discoveryService)
     service.process
