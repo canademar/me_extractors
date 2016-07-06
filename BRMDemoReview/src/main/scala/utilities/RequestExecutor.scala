@@ -1,3 +1,5 @@
+package utilities
+
 import org.apache.spark.rdd.RDD
 
 import scala.util.parsing.json.JSON
