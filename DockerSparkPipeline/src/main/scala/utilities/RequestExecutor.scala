@@ -49,7 +49,7 @@ class RequestExecutor {
 object RequestExecutor {
 
 
-  def executeRequest(method: String, query: String, body: String = None): Any ={
+  def executeRequest(method: String, query: String, body: String = ""): String ={
     if(method=="POST"){
       executePostRequest(query, body)
     }else{
@@ -60,18 +60,19 @@ object RequestExecutor {
 
 
   // Each query is delivered to the service and the response is stored
-  def executeGetRequest(query: String): Any = {
+  def executeGetRequest(query: String): String = {
     // The REST service is queried and the response (JSON format) is obtained
     println("Waiting")
-    Thread.sleep(500)
+    Thread.sleep(5000)
     try {
-      val response: HttpResponse[String] = Http(query).timeout(connTimeoutMs = 10000, readTimeoutMs = 50000).asString
+      val response: HttpResponse[String] = Http(query).timeout(connTimeoutMs = 10000, readTimeoutMs = 500000).asString
       if (response.isError) {
         println(s"HttpError: $query . ${response.body} ${response.code}")
-        Map()
+        "{}"
       }
       val body = response.body
-      val jsoned = JSON.parseFull(body)
+      body
+      /*val jsoned = JSON.parseFull(body)
       val toMatch = jsoned.getOrElse(None)
       toMatch match {
       case None => {
@@ -82,27 +83,31 @@ object RequestExecutor {
         }
       }
       case x: Any => x
-    }
+    }*/
     }catch{
       case e: Exception => {
         println("Unexpected error executing get request")
-        Map()
+        println(e.getStackTrace.mkString("\n"))
+        "{}"
       }
     }
+
   }
 
-  def executePostRequest(query: String, postBody:String): Any = {
+  def executePostRequest(query: String, postBody:String): String = {
     // The REST service is queried and the response (JSON format) is obtained
     println("Waiting")
     Thread.sleep(500)
     try {
+      //TODO: Configurable Timeout
       val response: HttpResponse[String] = Http(query).postData(postBody).timeout(connTimeoutMs = 10000, readTimeoutMs = 50000).asString
       if (response.isError) {
         println(s"HttpError: $query . ${response.body} ${response.code}")
-        Map()
+        //Map()
+        "{}"
       }
       val body = response.body
-      val jsoned = JSON.parseFull(body)
+      /*val jsoned = JSON.parseFull(body)
       val toMatch = jsoned.getOrElse(None)
       toMatch match {
         case None => {
@@ -113,11 +118,13 @@ object RequestExecutor {
           }
         }
         case x: Any => x
-      }
+      }*/
+      body
     }catch{
       case e: Exception => {
-        println("Unexpected error executing get request")
-        Map()
+        println("Unexpected error executing post request")
+        //Map()
+        "{}"
       }
     }
   }

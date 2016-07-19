@@ -11,7 +11,8 @@ object ServiceConfParser{
     val parts = parameteredUrl.split("[$|}]")
     val substitutedParts = parts.map(part=>{
       if(part.startsWith("{")){
-        URLEncoder.encode(inputMap(part.replaceFirst("^\\{","")).toString,"UTF-8")
+        val key = part.replaceFirst("^\\{","")
+        URLEncoder.encode(inputMap(key).toString,"UTF-8")
       }else{
         part
       }

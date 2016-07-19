@@ -4,11 +4,11 @@ import java.io.File
 import java.text.Normalizer
 
 import com.typesafe.config.{Config, ConfigFactory}
-import legacy.SparkConceptExtractor
+import legacy._
 import org.apache.spark.rdd.RDD
 import org.apache.spark.{SparkConf, SparkContext}
 import org.slf4j.LoggerFactory
-import services.{DockerService, NotsFilter}
+import services.{RESTService, DockerService, NotsFilter}
 import utilities.{ElasticsearchPersistor, MarathonServiceDiscovery}
 
 import scala.collection.JavaConversions._
@@ -17,8 +17,8 @@ import scala.util.parsing.json.JSON
 
 
 object SparkOrchestrator {
-  //val confFilePath = "/home/cnavarro/workspace/mixedemotions/me_extractors/BRMDemoReview/src/main/resources/cnavarro.conf"
-  val confFilePath = "/home/cnavarro/projectManager/conf/docker.conf"
+  val confFilePath = "/home/cnavarro/workspace/mixedemotions/me_extractors/DockerSparkPipeline/src/main/resources/cnavarro.conf"
+  //val confFilePath = "/home/cnavarro/projectManager/conf/docker.conf"
   val logger = LoggerFactory.getLogger(SparkOrchestrator.getClass)
 
 
@@ -138,17 +138,15 @@ object SparkOrchestrator {
 
       case "concept_es" => conceptextractor_spanish
 
-      case "sent_en" => sentimentextractor_english
-
       case "upm_sent" => upm_sentiment_extractor
-
-      case "entities_en" => entitylinking_english
 
       case "persistor" => elasticsearch_persistor
 
       case "emotions" => emotion_extractor
 
       case s if s.startsWith("docker") => docker_service(s)
+
+      case s if s.startsWith("REST") => rest_service(s)
 
     }
 
@@ -161,6 +159,17 @@ object SparkOrchestrator {
     println(s"Docker conf path: ${confPath}")
     val discoveryService = new MarathonServiceDiscovery(configurationMap.getString("mesos_dns.ip"), configurationMap.getInt("mesos_dns.port"))
     val service = DockerService.dockerServiceFromConfFile(confPath, discoveryService)
+    service.process
+
+  }
+
+  def rest_service(restServiceName:String): RDD[String] => RDD[String] = {
+    val serviceName = restServiceName.replace("rest_","")
+    val confFolder = configurationMap.getString("rest_conf_folder")
+    val confPath = confFolder + serviceName + ".conf"
+    println(s"Rest conf path: ${confPath}")
+
+    val service = RESTService.restServiceFromConfFile(confPath)
     service.process
 
   }
@@ -212,24 +221,6 @@ object SparkOrchestrator {
 
   }
 
-  val sentimentextractor_english: RDD[String] => RDD[String] = (x:RDD[String]) => {
-    println("Going to sentiment extractor")
-    //val resourcesFolder = masterConfiguration.getString("conf.sent_en.resources_folder")
-    val resourcesFolder = "/var/data/resources/nuig_sentiment/"
-    val result = SparkSentiment.extractSentimentFromRDD(x, resourcesFolder)
-    println("Sentiment extractor finished")
-    result
-  }
-
-
-
-  val entitylinking_english: RDD[String] => RDD[String] = (x:RDD[String]) => {
-    println("Entity linking")
-    val confPath = configurationMap.getString("entities_en.conf_path")
-    val result = NUIGEntityLinkingExtractor.extractEntityLinkingFromRDD(x, confPath)
-    println("Entity linking finished")
-    result
-  }
 
 
   val emotion_extractor: RDD[String] => RDD[String] = {

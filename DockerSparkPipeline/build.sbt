@@ -1,6 +1,6 @@
 name := "DockerSparkPipeline"
 
-version := "0.1"
+version := "0.3"
 
 scalaVersion := "2.10.4"
 
@@ -13,6 +13,8 @@ libraryDependencies += "com.sksamuel.elastic4s" %% "elastic4s-streams" % "1.7.1"
 libraryDependencies += "org.apache.spark" %% "spark-core" % "1.4.1" //% "provided"
 
 libraryDependencies += "org.json4s" % "json4s-jackson_2.10" % "3.2.11"
+
+libraryDependencies += "org.scalatest" % "scalatest_2.10" % "2.2.6" % "test"
 
 libraryDependencies ++= Seq("com.typesafe.scala-logging" %% "scala-logging-slf4j" % "2.1.2",
 "com.typesafe" %% "scalalogging-slf4j" % "1.0.1",

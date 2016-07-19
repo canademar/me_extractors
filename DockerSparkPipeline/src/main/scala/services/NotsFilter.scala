@@ -37,5 +37,21 @@ object NotsFilter {
     result
   })
 
+  def filterText(input: List[String]): List[String] = input.map(x => JSON.parseFull(x)
+    .asInstanceOf[Option[Map[String, Any]]].getOrElse(Map[String, Any]())).filter(x => {
+    val nots = x.get("nots").asInstanceOf[Option[List[String]]].getOrElse(List[String]()).map(x=>x.toLowerCase())
+    val text = x.get("text").asInstanceOf[Option[String]].getOrElse("")
+    val resultArray = nots.map(x => {
+      !(text.toLowerCase.contains(x))
+    })
+    val result = resultArray.foldLeft(true)(_ & _)
+    result
+  }).map(x => {
+
+    implicit val formats = Serialization.formats(NoTypeHints)
+    write(x)
+
+  })
+
 
 }
