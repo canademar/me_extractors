@@ -15,24 +15,24 @@ import scala.util.parsing.json.JSON
 
 
 object ScalaOrchestrator {
-  val confFilePath = "/home/cnavarro/workspace/mixedemotions/me_extractors/DockerSparkPipeline/src/main/resources/dockerProject.conf"
+  //val confFilePath = "/home/cnavarro/workspace/mixedemotions/me_extractors/DockerSparkPipeline/src/main/resources/dockerProject.conf"
   //val confFilePath = "/home/cnavarro/projectManager/conf/docker.conf"
   val logger = LoggerFactory.getLogger(ScalaOrchestrator.getClass)
 
 
-  val configurationMap : Config = {
+  def createConfigurationMap(confFilePath : String) : Config = {
     println(s"ConfFile: ${confFilePath}")
     val confFile = new File(confFilePath)
     val parsedConf = ConfigFactory.parseFile(confFile)
     ConfigFactory.load(parsedConf)
   }
 
-  def findMixEmModule(mod: String): List[String] => List[String] = {
+  def findMixEmModule(mod: String)(implicit configurationMap : Config): List[String] => List[String] = {
 
     mod.trim match {
-      case s if s.startsWith("docker") => dockerService(s)
+      case s if s.startsWith("docker") => dockerService(s, configurationMap)
 
-      case s if s.startsWith("rest") => restService(s)
+      case s if s.startsWith("rest") => restService(s, configurationMap)
 
       case _ => throw new Exception("Module names should start by 'docker' or 'rest' in the 'modules' setting of the project configuration file")
 
@@ -40,7 +40,7 @@ object ScalaOrchestrator {
 
   }
 
-  def dockerService(dockerName:String): List[String] => List[String] = {
+  def dockerService(dockerName:String, configurationMap: Config): List[String] => List[String] = {
     val serviceName = dockerName.replace("docker_","")
     val confFolder = configurationMap.getString("docker_conf_folder")
     val confPath = confFolder + serviceName + ".conf"
@@ -52,7 +52,7 @@ object ScalaOrchestrator {
   }
 
 
-  def restService(restServiceName:String): List[String] => List[String] = {
+  def restService(restServiceName:String, configurationMap: Config): List[String] => List[String] = {
     val serviceName = restServiceName.replace("rest_", "")
     val confFolder = configurationMap.getString("rest_conf_folder")
     val confPath = confFolder + serviceName + ".conf"
@@ -70,9 +70,23 @@ object ScalaOrchestrator {
     bw.close()
   }
 
+  def usage(): Unit = {
+    println(s"Missing params. There should be 2 params: {confFilePath} {inputFilePath} ")
+    sys.exit(1)
+  }
 
 
   def main (args: Array[String]) {
+
+    if(args.length!=2){
+      usage
+    }
+
+    val configurationFilePath = args(0)
+    val inputPath = args(1)
+
+    implicit val configurationMap = createConfigurationMap(configurationFilePath)
+
 
     // Pipeline configuration
     val mods : List[String] = configurationMap.getStringList("modules").toList.reverse
@@ -92,8 +106,8 @@ object ScalaOrchestrator {
       "{ \"text\": \"El jefe se va a Endesa.\", \"nots\": [\"hola\"], \"lang\": \"es\"}")
 
 
-    val inputPath = args(0)
-    println("inputPath")
+
+
 
 
     val initData = Source.fromFile(inputPath).getLines()
@@ -153,6 +167,8 @@ object ScalaOrchestrator {
     */
 
   }
+
+  println("-Finished-")
 
 
 

@@ -82,7 +82,7 @@ object FutureOrchestrator {
       }
 
     }
-    Await.ready(Future.sequence(input),300 seconds)
+    Await.ready(Future.sequence(input), processingTimeOut )
     bw.close()
   }
 
@@ -127,7 +127,7 @@ object FutureOrchestrator {
 
     println("\nTotal number of raw data to process: " + data.length + "\n")
 
-    // The NOT filter is initially applied to the data
+    // The NOT filter is initially applied to t he data
     val filteredData = NotsFilter.filterText(data)
     println(s"\nNumber of items after initial filtering: ${filteredData.length}\n")
 
@@ -151,7 +151,7 @@ object FutureOrchestrator {
     // Data are processed by the selected modules (composed function)
     println(s"\nNumber of items after processing (resultJSON): ${futureResults.length}\n")
 
-    saveToFile(futureResults,configurationMap.getString("outputFilePath"), 300 seconds)
+    saveToFile(futureResults,configurationMap.getString("outputFilePath"), configurationMap.getInt("executionTimeoutSeconds") seconds)
 
 
 

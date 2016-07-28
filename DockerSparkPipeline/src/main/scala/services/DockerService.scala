@@ -16,7 +16,7 @@ import utilities.{JsonPathsTraversor, MarathonServiceDiscovery, RequestExecutor,
 
 
 class DockerService(serviceId: String, requestUrl: String, outputField:String, serviceDiscovery: MarathonServiceDiscovery,
-                    method:String, body:String, responsePath: String)
+                    method:String, bodyKey:String, responsePath: String, requestDelayMs: Int, requestTimeoutMs: Int)
 extends Serializable{
   implicit val formats = Serialization.formats(NoTypeHints)
 
@@ -26,7 +26,8 @@ extends Serializable{
     val (ip, port) = serviceDiscovery.naiveServiceDiscover(serviceId)
     val url = ServiceConfParser.completeUrl(ip, port, requestUrl, input)
     println(s"Going to execute service:${url}")
-    val response = RequestExecutor.executeGetRequest(url)
+    val bodyContent = if(bodyKey.length>0) input(bodyKey).toString else ""
+    val response = RequestExecutor.executeRequest(method, url, body=bodyContent, requestDelay = requestDelayMs, requestTimeout = requestTimeoutMs)
     //??? The response might be a single string or an array, not always a map
     val selectedResult = JsonPathsTraversor.getJsonPath(responsePath, response).getOrElse(List(0))
     val result = input + ((outputField,selectedResult))
@@ -86,8 +87,10 @@ object DockerService {
     val parsedConf = ConfigFactory.parseFile(confFile)
     val conf = ConfigFactory.load(parsedConf)
     val body : String = if(conf.hasPath("body")) conf.getString("body") else ""
+    val requestDelay = if(conf.hasPath("requestDelayMs")) conf.getInt("requestDelayMs") else 500
+    val requestTimeout = if(conf.hasPath("requestTimeoutSeconds")) conf.getInt("requestTimeoutSeconds")*1000 else 50000
     new DockerService(conf.getString("serviceId"), conf.getString("requestUrl"), conf.getString("outputField"), serviceDiscovery, conf.getString("method"), body,
-    conf.getString("responsePath"))
+    conf.getString("responsePath"),requestDelay,requestTimeout)
 
   }
 

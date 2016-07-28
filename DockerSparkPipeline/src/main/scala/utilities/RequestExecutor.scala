@@ -49,76 +49,54 @@ class RequestExecutor {
 object RequestExecutor {
 
 
-  def executeRequest(method: String, query: String, body: String = ""): String ={
+  def executeRequest(method: String, query: String, requestTimeout: Int = 50000, requestDelay: Int = 500, body: String = ""): String ={
     if(method=="POST"){
-      executePostRequest(query, body)
+      executePostRequest(query, body, requestTimeout, requestDelay)
     }else{
-      executeGetRequest(query)
+      executeGetRequest(query, requestTimeout, requestDelay)
     }
   }
 
 
 
   // Each query is delivered to the service and the response is stored
-  def executeGetRequest(query: String): String = {
+  def executeGetRequest(query: String, requestTimeoutMs: Int, requestDelayMs: Int): String = {
     // The REST service is queried and the response (JSON format) is obtained
-    println("Waiting")
-    Thread.sleep(5000)
+    println(s"Waiting ${requestDelayMs}")
+    Thread.sleep(requestDelayMs)
     try {
-      val response: HttpResponse[String] = Http(query).timeout(connTimeoutMs = 10000, readTimeoutMs = 500000).asString
+      println(s"Executing query ${query}")
+      println(s"Waiting response for ${requestTimeoutMs} ms")
+      val response: HttpResponse[String] = Http(query).timeout(connTimeoutMs = 10000, readTimeoutMs = requestTimeoutMs).asString
       if (response.isError) {
         println(s"HttpError: $query . ${response.body} ${response.code}")
         "{}"
       }
       val body = response.body
       body
-      /*val jsoned = JSON.parseFull(body)
-      val toMatch = jsoned.getOrElse(None)
-      toMatch match {
-      case None => {
-        if (body.length != 0) {
-          body
-        } else {
-          Map()
-        }
-      }
-      case x: Any => x
-    }*/
     }catch{
       case e: Exception => {
         println("Unexpected error executing get request")
-        println(e.getStackTrace.mkString("\n"))
+        println(s"Error: ${e.getMessage}\n")
+        //println(e.getStackTrace.mkString("\n"))
         "{}"
       }
     }
 
   }
 
-  def executePostRequest(query: String, postBody:String): String = {
+  def executePostRequest(query: String, postBody:String, requestTimeoutMs: Int, requestDelayMs: Int): String = {
     // The REST service is queried and the response (JSON format) is obtained
     println("Waiting")
-    Thread.sleep(500)
+    Thread.sleep(requestDelayMs)
     try {
-      //TODO: Configurable Timeout
-      val response: HttpResponse[String] = Http(query).postData(postBody).timeout(connTimeoutMs = 10000, readTimeoutMs = 50000).asString
+      val response: HttpResponse[String] = Http(query).postData(postBody).timeout(connTimeoutMs = 10000, readTimeoutMs = requestTimeoutMs).asString
       if (response.isError) {
         println(s"HttpError: $query . ${response.body} ${response.code}")
         //Map()
         "{}"
       }
       val body = response.body
-      /*val jsoned = JSON.parseFull(body)
-      val toMatch = jsoned.getOrElse(None)
-      toMatch match {
-        case None => {
-          if (body.length != 0) {
-            body
-          } else {
-            Map()
-          }
-        }
-        case x: Any => x
-      }*/
       body
     }catch{
       case e: Exception => {

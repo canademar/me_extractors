@@ -16,7 +16,8 @@ import scala.util.parsing.json.JSON
 /**
  * Created by cnavarro on 4/07/16.
  */
-class RESTService(requestUrl: String, method: String, body: String, ip: String, port:Int, outputField:String, responsePath: String)
+class RESTService(requestUrl: String, method: String, bodyKey: String, ip: String, port:Int, outputField:String, responsePath: String,
+                   requestDelayMs: Int, requestTimeoutMs: Int)
   extends Serializable{
   implicit val formats = Serialization.formats(NoTypeHints)
 
@@ -25,7 +26,8 @@ class RESTService(requestUrl: String, method: String, body: String, ip: String, 
   def executeService(input: Map[String,Any]): Map[String, Any] ={
     val url = ServiceConfParser.completeUrl(ip, port, requestUrl, input)
     println(s"Going to execute service:${url}")
-    val response = RequestExecutor.executeRequest(method, url, body)
+    val bodyContent = if(bodyKey.length>0) input(bodyKey).toString else ""
+    val response = RequestExecutor.executeRequest(method, url, body=bodyContent, requestDelay = requestDelayMs, requestTimeout = requestTimeoutMs)
     val selectedResult = JsonPathsTraversor.getJsonPath(responsePath, response).getOrElse(List())
     val result = input + ((outputField,selectedResult))
     result
@@ -89,8 +91,11 @@ object RESTService {
     val parsedConf = ConfigFactory.parseFile(confFile)
     val conf = ConfigFactory.load(parsedConf)
     val body : String = if(conf.hasPath("body")) conf.getString("body") else ""
-    new RESTService(conf.getString("requestUrl"),  conf.getString("method"), body, conf.getString("ip"), conf.getInt("port"), conf.getString("outputField"),
-                    conf.getString("responsePath"))
+    val requestDelay = if(conf.hasPath("requestDelayMs")) conf.getInt("requestDelayMs") else 500
+    //val requestTimeout = if(conf.hasPath("requestTimeoutSeconds")) conf.getInt("requestTimeoutSeconds")*1000 else 50000
+    val requestTimeout = conf.getInt("requestTimeoutSeconds")*1000
+    new RESTService(conf.getString("requestUrl"), conf.getString("method"), body, conf.getString("ip"),
+      conf.getInt("port"), conf.getString("outputField"), conf.getString("responsePath"), requestDelay, requestTimeout)
 
   }
 

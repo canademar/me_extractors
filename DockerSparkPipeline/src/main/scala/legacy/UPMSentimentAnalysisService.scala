@@ -49,7 +49,7 @@ object UPMSentimentAnalysisService {
      val query = composeQuery(input, serviceHost)
       println(query)
      try {
-       val response = RequestExecutor.executeGetRequest(query).asInstanceOf[Map[String,Any]]
+       val response = RequestExecutor.executeGetRequest(query, 5000, 500).asInstanceOf[Map[String,Any]]
        val sentiment = getSentimentFromResponse(response)
        collection.mutable.Map(sentiment.toSeq: _*)
      }catch {
@@ -97,7 +97,7 @@ object UPMSentimentAnalysisService {
       val mutableMap = collection.mutable.Map(inputMap.toSeq: _*)
       val query = composeQuery(mutableMap, "senpy.cluster.gsi.dit.upm.es")
       println(query)
-      val response = RequestExecutor.executeGetRequest(query).asInstanceOf[Map[String,Any]]
+      val response = RequestExecutor.executeGetRequest(query, 5000, 500).asInstanceOf[Map[String,Any]]
       val sentiment = getSentimentFromResponse(response)
       println(sentiment)
     }

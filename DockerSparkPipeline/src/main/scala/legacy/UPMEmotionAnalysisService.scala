@@ -43,7 +43,7 @@ object UPMEmotionAnalysisService {
   def extractEmotions(input: scala.collection.mutable.Map[String,Any], serviceHost: String) : scala.collection.mutable.Map[String,Any] = {
      val query = composeQuery(input, serviceHost)
       println(query)
-      val response = RequestExecutor.executeGetRequest(query).asInstanceOf[Map[String,Any]]
+      val response = RequestExecutor.executeGetRequest(query,5000, 500).asInstanceOf[Map[String,Any]]
       val emotions = getEmotionsFromResponse(response)
       collection.mutable.Map(emotions.toSeq: _*)
   }
@@ -87,7 +87,7 @@ object UPMEmotionAnalysisService {
       val mutableMap = collection.mutable.Map(inputMap.toSeq: _*)
       val query = composeQuery(mutableMap, "senpy.cluster.gsi.dit.upm.es")
       println(query)
-      val response = RequestExecutor.executeGetRequest(query).asInstanceOf[Map[String,Any]]
+      val response = RequestExecutor.executeGetRequest(query, 5000, 500).asInstanceOf[Map[String,Any]]
       val emotions = getEmotionsFromResponse(response)
       println(emotions)
     }
