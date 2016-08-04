@@ -1,6 +1,6 @@
 name := "DockerSparkPipeline"
 
-version := "0.4"
+version := "0.5"
 
 scalaVersion := "2.10.4"
 
@@ -22,6 +22,9 @@ libraryDependencies ++= Seq("com.typesafe.scala-logging" %% "scala-logging-slf4j
 "org.slf4j" % "log4j-over-slf4j" % "1.7.1",  // for any java classes looking for this
 "ch.qos.logback" % "logback-classic" % "1.0.3")
 
+mainClass in Compile := Some("orchestrator.FutureOrchestrator")
+
+mainClass in assembly := Some("orchestrator.FutureOrchestrator")
 
 assemblyMergeStrategy in assembly := {
   //case PathList("META-INF", "MANIFEST.MF") => MergeStrategy.discard
