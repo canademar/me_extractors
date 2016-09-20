@@ -18,6 +18,8 @@ Serializable{
 
   def extractConceptsFromRDD(input: RDD[String]): RDD[String] = {
 
+    println("!111111111111111111111 Extract concpets from rdd")
+
     val temp = input.map(x=> JSON.parseFull(x).asInstanceOf[Some[Map[String,Any]]].getOrElse(Map[String, Any]())).map(x => collection.mutable.Map(x.toSeq: _*))
 
     val temp2 = extractConcepts(temp)
@@ -40,14 +42,20 @@ Serializable{
   def extractConcepts(inputRDD: RDD[scala.collection.mutable.Map[String,Any]]): RDD[scala.collection.mutable
   .Map[String,Any]] ={
 
+
+
     val inputIndexMap = inputRDD.zipWithIndex() // origMap, index
 
     val filtTax = taxonomy.filter(x=>x._2>inlinks_threshold).map(x=>(x._1,Set.empty))
 
     val filteredInput = inputIndexMap.filter(x=>x._1.getOrElse("lang","")=="es")
 
+    println("Concepts for something")
+
     val input = filteredInput.map(x=>(x._1.getOrElse("text","").asInstanceOf[String],defineSubentities(x._1.getOrElse("text", "").asInstanceOf[String]), x._2)) // origMap, submessages, index
     //val input = inputIndexMap.map(x=>(x._1.getOrElse("text","").asInstanceOf[String],defineSubentities(x._1.getOrElse("text", "").asInstanceOf[String]), x._2)) // origMap, submessages, index
+
+    println("some map")
 
     val tempInput = input.map(x=>(x._2, x._3)).map(x=>{
       var tempSet = scala.collection.mutable.Set[(String, Long)]()
@@ -65,6 +73,8 @@ Serializable{
       tempSet.toArray
 
     }).flatMap(x=>x).map(x=>(x._2,x._1)).groupByKey().map(x=>(x._1,x._2.toList)) //Index, list of concepts
+
+    println("Now only remains to format")
 
     val result = inputIndexMap.map(x => (x._2, x._1)).cogroup(tempResult).map(x=> (x._2._1.iterator.next()
       .asInstanceOf[scala.collection.mutable.Map[String, Any]], x._2._2.toList.flatMap(y=>y).distinct)).map(x=> {

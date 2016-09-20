@@ -40,6 +40,10 @@ object SparkSentiment {
     val dataPath: String = resourcesFolder + "data/twitterSemEval2013.tsv"
     val modelPath: String = resourcesFolder + "model/learntSentiTwitter.model"
 
+    println("******************glovePath: "+glovePath)
+    println("******************dataPath: "+dataPath)
+    println("******************modelPath: "+modelPath)
+
     sentimenter.loadModel(modelPath, glovePath, dataPath)
 
     for(line<-lines) yield {
@@ -50,7 +54,7 @@ object SparkSentiment {
         line += ("sentiment"-> sentimenter.classify(text))
         //Map("_source"->(line.getOrElse("_source", Map[String,String]()).asInstanceOf[Map[String,String]] + (("sentiment", sentimenter.classify(text)))))
       }else{
-        line += ("sentiment"-> "No sentiment found")
+        line += ("sentiment"-> "None")
       }
     }
 
@@ -59,6 +63,8 @@ object SparkSentiment {
   
 
   def extractSentimentFromRDD(input: RDD[String], resourcesFolder: String): RDD[String] = {
+
+    println("Seeeeeeeentimeeeeeeeeeeeeeeeeent!")
 
     val temp = input.map(x=> JSON.parseFull(x).asInstanceOf[Some[Map[String,Any]]].getOrElse(Map[String,Any]())).map(x => collection.mutable.Map(x.toSeq: _*))
 

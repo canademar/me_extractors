@@ -1,5 +1,5 @@
 //import java.util.List
-
+/*
 import edu.insight.unlp.nn.example.TwitterSentiMain
 import org.apache.spark.rdd.RDD
 import org.json4s.NoTypeHints
@@ -109,3 +109,4 @@ object NUIGEntityLinkingExtractor {
 
 
 }
+*/
