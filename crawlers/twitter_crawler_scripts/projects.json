@@ -35,17 +35,25 @@
         "id": 5
     }, 
     {
-        "name": "Leroy_Merlin", 
+        "name": "Motorola", 
         "langs": [ "en",  "es"], 
-        "synonyms": [ "Leroy Merlin",  "leroymerlin",  "leroy-merlin",  "leroymerlin_es"], 
+        "synonyms": [ "motorola",  "moto_support",  "motorolaes"], 
         "nots": [], 
-        "id": 6
+        "id": 8
     }, 
     {
-        "name": "Porcelanosa", 
+        "name": "Samsung", 
         "langs": [ "en",  "es"], 
-        "synonyms": [ "Porcelanosa",  "porcelanosa_es"], 
+        "synonyms": [ "SamsungEspana",  "SamsungResponde", "samsung", "SamsungMobile"], 
         "nots": [], 
-        "id": 7
+        "id": 9
+    },
+    {
+        "name": "Huawei", 
+        "langs": [ "en",  "es"], 
+        "synonyms": [ "Huawei",  "HuaweiSpain"], 
+        "nots": [], 
+        "id": 10
     }
+
 ]

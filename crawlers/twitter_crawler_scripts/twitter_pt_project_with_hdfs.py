@@ -6,6 +6,7 @@ import time
 import re
 from datetime import datetime
 from twarc import Twarc
+from hdfs import InsecureClient
 
 
 access_token = "4284680837-JRl0SwXnop8nJMUL0QEQ56BwDDXOpoa08tyRNUq"
@@ -19,8 +20,10 @@ languages = ["es", "en"]
 
 TWEET_DUMP_SIZE = 500
 RESTART_TIME = 3600
-PROJECTS_FOLDER = '/var/data/inputs/projects/'
-WRITE_TO_FILE = True
+HDFS_URL = 'http://192.168.1.12:50070'
+HDFS_USER  = 'stratio'
+PROJECTS_FOLDER = 'data/projects/'
+WRITE_TO_FILE = False
 
 def main():
     """
@@ -105,7 +108,7 @@ def stream(query, projects, t):
     # create directories and files for keywords
     tweets_to_write = {}
     indexes = {}
-    #client = InsecureClient(HDFS_URL, user=HDFS_USER)
+    client = InsecureClient(HDFS_URL, user=HDFS_USER)
     for project in projects:
         project_id = project["id"]
         tweets_to_write[project_id] = []
@@ -124,14 +127,14 @@ def stream(query, projects, t):
                 os.makedirs("data/projects")
 
             # for keyword
-            if not os.path.isdir("data/projects/%s" % project_id):
-                os.makedirs("data/projects/%s" % project_id)
+            if not os.path.isdir("data/projects/"+project_id):
+                os.makedirs("data/projects/"+project_id)
 
             # for date
-            if not os.path.isdir("data/projects/%s/%s" % (project_id,datestr)):
-                os.makedirs("data/projects/%s/%s" % (project_id,datestr))
-            if not os.path.isdir("data/projects/%s/%s/twitter" % (project_id,datestr)):
-                os.makedirs("data/projects/%s/%s/twitter" % (project_id,datestr))
+            if not os.path.isdir("data/projects/"+project_id+"/"+datestr):
+                os.makedirs("data/projects/"+project_id+"/"+datestr)
+            if not os.path.isdir("data/projects/"+project_id+"/"+datestr+"/twitter"):
+                os.makedirs("data/projects/"+project_id+"/"+datestr+"/twitter")
 
             # create json file for writing data
             with open(filepath(project_id, datestr, timestr)+".json", "w") as fw:
@@ -196,7 +199,7 @@ def stream(query, projects, t):
                              hour_keywords[project_id] = 1
                          
                          if len(tweets_to_write[project_id]) % TWEET_DUMP_SIZE == 0:
-                             #hdfs_write_tweets(tweets_to_write[project_id], filename+"_"+str(indexes[project_id]), project, client)
+                             hdfs_write_tweets(tweets_to_write[project_id], filename+"_"+str(indexes[project_id]), project, client)
                              indexes[project_id] = indexes[project_id]+1
                              tweets_to_write[project_id] = []
 
@@ -215,8 +218,7 @@ def stream(query, projects, t):
                         print "%s - Remaining tweets to write %s: %s" % (datetime.now(), project_id, len(tweets_to_write[project_id]))
                         filename = filepath(project_id, datestr, timestr)
                         if(len(tweets_to_write[project_id])>0):
-                            pass
-                            #hdfs_write_tweets(tweets_to_write[project_id], filename+"_"+str(indexes[project_id]+1), project, client)
+                            hdfs_write_tweets(tweets_to_write[project_id], filename+"_"+str(indexes[project_id]+1), project, client)
                             #print "Goint to write into %s_%s" % (filename, indexes[project_id])                          
                             #formatted_tweets = [format_tweet(tweet, project) for tweet in tweets_to_write[project_id]]
                             #text_to_write = "\n".join(tweets_to_write[project_id])
@@ -299,12 +301,12 @@ def format_tweet(tweet, project):
     return json.dumps(structure)
 
 
-#def hdfs_write_tweets(tweets_to_write, filename, project, client):
-#    print "Going to write %s into %s" % (len(tweets_to_write), filename)
-#    formatted_tweets = [format_tweet(tweet,project) for tweet in tweets_to_write]
-#    text_to_write = "\n".join(formatted_tweets)
-#    with client.write(filename, encoding='utf-8') as writer:
-#        writer.write(text_to_write)
+def hdfs_write_tweets(tweets_to_write, filename, project, client):
+    print "Going to write %s into %s" % (len(tweets_to_write), filename)
+    formatted_tweets = [format_tweet(tweet,project) for tweet in tweets_to_write]
+    text_to_write = "\n".join(formatted_tweets)
+    with client.write(filename, encoding='utf-8') as writer:
+        writer.write(text_to_write)
 
 def filepath(project_id, datestr, timestr):
     return PROJECTS_FOLDER+str(project_id)+"/"+datestr+"/twitter/"+timestr
