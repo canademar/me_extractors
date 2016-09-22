@@ -1,7 +1,7 @@
 #!/bin/bash
 
 POS_DIR=.
-BASE_PORT=2812
+BASE_PORT=2612
 DEFAULT_SERVERS_NUMBER=1
 
 function start() {

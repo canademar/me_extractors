@@ -113,29 +113,30 @@ def stream(query, projects, t):
 
         if WRITE_TO_FILE:
             # for statistics
-            if not os.path.isdir("data/statistics"):
-                os.makedirs("data/statistics")
+            if not os.path.isdir(PROJECTS_FOLDER + "statistics"):
+                os.makedirs(PROJECTS_FOLDER + "statistics")
 
             # for statistics date
-            if not os.path.isdir("data/statistics/"+datestr):
-                os.makedirs("data/statistics/"+datestr)
+            if not os.path.isdir(PROJECTS_FOLDER + "statistics/"+datestr):
+                os.makedirs(PROJECTS_FOLDER + "statistics/"+datestr)
 
-            if not os.path.isdir("data/projects"):
-                os.makedirs("data/projects")
+            if not os.path.isdir(PROJECTS_FOLDER + "projects"):
+                os.makedirs(PROJECTS_FOLDER + "projects")
 
             # for keyword
-            if not os.path.isdir("data/projects/%s" % project_id):
-                os.makedirs("data/projects/%s" % project_id)
+            if not os.path.isdir(PROJECTS_FOLDER + "/%s" % project_id):
+                os.makedirs(PROJECTS_FOLDER + "/%s" % project_id)
 
             # for date
-            if not os.path.isdir("data/projects/%s/%s" % (project_id,datestr)):
-                os.makedirs("data/projects/%s/%s" % (project_id,datestr))
-            if not os.path.isdir("data/projects/%s/%s/twitter" % (project_id,datestr)):
-                os.makedirs("data/projects/%s/%s/twitter" % (project_id,datestr))
+            if not os.path.isdir(PROJECTS_FOLDER + "/%s/%s" % (project_id,datestr)):
+                os.makedirs(PROJECTS_FOLDER + "/%s/%s" % (project_id,datestr))
+            if not os.path.isdir(PROJECTS_FOLDER + "/%s/%s/twitter" % (project_id,datestr)):
+                os.makedirs(PROJECTS_FOLDER + "/%s/%s/twitter" % (project_id,datestr))
 
             # create json file for writing data
             with open(filepath(project_id, datestr, timestr)+".json", "w") as fw:
-                fw.write("[")
+                #fw.write("[")
+                fw.write("")
 
              
 
@@ -182,7 +183,8 @@ def stream(query, projects, t):
                              with open(filename + ".json", "a") as fw:
                                  dumped_json = json.dumps(tweet)
                                  fw.write(dumped_json)
-                                 fw.write(",")
+                                 #fw.write(",")
+                                 fw.write("\n")
 
                          # counting total
                          if project_id in total_keywords:
@@ -211,7 +213,7 @@ def stream(query, projects, t):
                                 if fw.read() == ",":
                                     fw.seek(-1, os.SEEK_END)
                                     fw.truncate()
-                                fw.write("]")
+                                #fw.write("]")
                         print "%s - Remaining tweets to write %s: %s" % (datetime.now(), project_id, len(tweets_to_write[project_id]))
                         filename = filepath(project_id, datestr, timestr)
                         if(len(tweets_to_write[project_id])>0):
@@ -244,7 +246,7 @@ def stream(query, projects, t):
                         if fw.read() == ",":
                             fw.seek(-1, os.SEEK_END)
                             fw.truncate()
-                        fw.write("]")
+                        #fw.write("]")
             if WRITE_TO_FILE:
                 # hour statistics
                 with open("data/statistics"+"/"+datestr+"/"+timestr+".txt", "w") as fw:
