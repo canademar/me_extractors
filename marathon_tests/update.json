@@ -1,0 +1,4 @@
+{
+"instances":3,
+"constraints":[["hostname","GROUP_BY"]]
+}

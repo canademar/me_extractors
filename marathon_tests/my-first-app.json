@@ -1,0 +1,9 @@
+{
+"cmd": "python -m SimpleHTTPServer 31500",
+"cpus": 0.5,
+"mem": 50,
+"instances": 1,
+"id": "my-first-app",
+"ports": [31500],
+"requirePorts": true
+}

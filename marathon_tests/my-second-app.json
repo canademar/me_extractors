@@ -1,0 +1,9 @@
+{
+"cmd": "python -m SimpleHTTPServer $PORT0",
+"cpus": 0.5,
+"mem": 50,
+"instances": 1,
+"id": "my-second-app",
+"ports": [0],
+"uris": ["https://www.python.org/ftp/python/2.7.9/Python-2.7.9.tgz.asc"]
+}

@@ -1,0 +1,26 @@
+[
+  {
+   "service": "_bridged-webapp._tcp.marathon.mesos",
+   "host": "bridged-webapp-nu36o-s0.marathon.slave.mesos.",
+   "ip": "192.168.1.13",
+   "port": "31223"
+  },
+  {
+   "service": "_bridged-webapp._tcp.marathon.mesos",
+   "host": "bridged-webapp-nu36o-s0.marathon.slave.mesos.",
+   "ip": "192.168.1.13",
+   "port": "31224"
+  },
+  {
+   "service": "_bridged-webapp._tcp.marathon.mesos",
+   "host": "bridged-webapp-d19a6-s0.marathon.slave.mesos.",
+   "ip": "192.168.1.13",
+   "port": "31388"
+  },
+  {
+   "service": "_bridged-webapp._tcp.marathon.mesos",
+   "host": "bridged-webapp-d19a6-s0.marathon.slave.mesos.",
+   "ip": "192.168.1.13",
+   "port": "31389"
+  }
+ ]
