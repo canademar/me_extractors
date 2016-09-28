@@ -1,0 +1,1 @@
+curl -XPUT http://192.168.1.12:9200/reviews -d @tweets.json

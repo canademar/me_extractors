@@ -1,0 +1,20 @@
+{"mappings": 
+    {"tweet": 
+         {"properties": 
+               {
+                "indextime": {"type": "date","format":"yyyyMMddHHmmss"},
+                "created_at": {"type": "date", "format":"E MMM dd HH:mm:ss Z yyyy"},
+                "entities": {"type":"string", "index": "not_analyzed"},
+                "topics": {"type":"string", "index": "not_analyzed"},
+                "emotions":
+                         {"properties":
+                             { 
+                             "@id": {"type":"string", "index": "not_analyzed"},
+                             "onyx:hasEmotionCategory": {"type":"string", "index": "not_analyzed"}
+                             }
+                         }
+                
+               }
+         }
+    }
+}
