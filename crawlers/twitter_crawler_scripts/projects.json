@@ -10,7 +10,7 @@
         "name": "BBVA", 
         "langs": ["en", "es"], 
         "synonyms": ["BBVA", "banco bilbao vizcaya", "bbv argentaria", "bbva_esp"], 
-        "nots": ["liga", "league", "futbol", "soccer", "match"], 
+        "nots": ["liga", "league", "futbol", "soccer", "match", "equipo", "jugador", "team", "player"], 
         "id": 2
     }, 
     {
@@ -44,7 +44,7 @@
     {
         "name": "Samsung", 
         "langs": [ "en",  "es"], 
-        "synonyms": [ "SamsungEspana",  "SamsungResponde", "samsung", "SamsungMobile"], 
+        "synonyms": ["samsung", "SamsungEspana",  "SamsungResponde", "SamsungMobile"], 
         "nots": [], 
         "id": 9
     },

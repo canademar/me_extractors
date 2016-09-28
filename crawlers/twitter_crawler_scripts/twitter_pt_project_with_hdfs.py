@@ -19,7 +19,7 @@ total_keywords = {}
 languages = ["es", "en"]
 
 TWEET_DUMP_SIZE = 500
-RESTART_TIME = 3600
+RESTART_TIME = 14400
 HDFS_URL = 'http://192.168.1.12:50070'
 HDFS_USER  = 'stratio'
 PROJECTS_FOLDER = 'data/projects/'

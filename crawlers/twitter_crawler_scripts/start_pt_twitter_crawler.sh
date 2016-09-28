@@ -33,7 +33,7 @@ case $1 in
          then
               echo "Servicio $SERVICE_NAME not running";
          else
-              echo 'Stopping $SERVICE_NAME'
+              echo "Stopping $SERVICE_NAME"
               kill -9  $CURRENT_SERV_PID;
               rm $PID_FILE
        fi
