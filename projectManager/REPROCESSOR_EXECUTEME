@@ -1,0 +1,1 @@
+java -cp BRMProjectManager-assembly-1.6.jar ProjectScheduler ./conf/customApplication.conf
