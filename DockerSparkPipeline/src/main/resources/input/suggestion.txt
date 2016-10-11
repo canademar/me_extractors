@@ -1,0 +1,1 @@
+{ "text": "This is a fabulous hotel. The breakfasts are great - fresh fruitbagels, muffins, hot eggs and sausage etc. Just around the corner from the hotel is a fabulous little Italianrestaurant - Bon Amici, I highly recommend it.", "textSource": "general", "language": "en" }
