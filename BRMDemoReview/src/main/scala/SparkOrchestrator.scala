@@ -105,7 +105,7 @@ object SparkOrchestrator {
     val collected = resultJSON.collect
     println("Reactivate persistence")
     //persistWithoutSpark(collected)
-    collected.map(println(_))
+    //collected.map(println(_))
     println("Num results: " + collected.length.toString)
 
 

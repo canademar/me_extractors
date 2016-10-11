@@ -1,6 +1,10 @@
 import java.io.File
 import java.net.URLEncoder
+import utilities.RequestExecutor
+
 import scala.collection.JavaConversions._
+
+import org.slf4j.LoggerFactory
 
 import com.typesafe.config.ConfigFactory
 import org.apache.spark.rdd.RDD
@@ -11,7 +15,7 @@ import org.json4s.jackson.Serialization._
 import scala.util.parsing.json.JSON
 
 
-class DockerService(serviceId: String, inputMap: Map[String, String], outputField:String, serviceDiscovery: MarathonServiceDiscovery)
+class DockerService(serviceId: String, requestUrl: String, outputField:String, serviceDiscovery: MarathonServiceDiscovery)
 extends Serializable{
 
 
@@ -19,7 +23,7 @@ extends Serializable{
   def executeService(input: Map[String,Any]): Map[String, Any] ={
     val url = composeQuery(input)
     println(s"Going to execute service:${url}")
-    val response = NetworkAnalysisService.executeGetRequest(url)
+    val response = RequestExecutor.executeGetRequest(url)
     //??? The response might be a single string or an array, not always a map
     val result = input + ((outputField,response))
     result
@@ -56,7 +60,6 @@ extends Serializable{
 
     println("Compose Query")
     println(s"input:${input}")
-    println(s"inputMap:${inputMap}")
     val params = inputMap.map{case (paramKey, inputKey) => (paramKey, input(inputKey) )}
     println(s"serviceDiscovery for ${serviceId}")
     val baseUrl = serviceDiscovery.naiveServiceDiscoverURL(serviceId)
@@ -86,6 +89,9 @@ object DockerService {
   }
 
   def main(args: Array[String]) {
+
+    val logger = LoggerFactory.getLogger(DockerService.getClass)
+    logger.info("Come ooooooooon")
     val inputs = Array("{\"text\": \"I hate western movies with John Wayne\", \"nots\": [\"hola\"], \"lang\": \"en\"}",
       "{ \"text\": \"Really nice car\", \"nots\": [\"hola\"], \"lang\": \"en\"}",
       "{ \"text\": \"The new Star Wars film is really nasty. You will not enjoy it anyway\", \"nots\": [\"hola\"], \"lang\": \"en\"}",
@@ -96,7 +102,8 @@ object DockerService {
     )
 
     val discovery = new MarathonServiceDiscovery("localhost",8123)
-    val confPath = "/home/cnavarro/projectManager/conf/dockerServices/spanish_topic_service.conf"
+    //val confPath = "/home/cnavarro/projectManager/conf/dockerServices/spanish_topic_service.conf"
+    val confPath = "/home/cnavarro/workspace/mixedemotions/me_extractors/BRMDemoReview/src/main/resources/dockerServices/spanish_topic_service.conf"
     println(s"ConfPath:${confPath}")
     val dockerService = dockerServiceFromConfFile(confPath, discovery)
 
@@ -105,6 +112,7 @@ object DockerService {
       val inputMap = JSON.parseFull(input).asInstanceOf[Some[Map[String,Any]]].getOrElse(Map[String,Any]())
       val result = dockerService.executeService(inputMap)
       println(result)
+      logger.info("Come ooooooooon")
     }
 
   }

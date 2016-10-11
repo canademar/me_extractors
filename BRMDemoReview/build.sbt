@@ -14,6 +14,12 @@ libraryDependencies += "org.apache.spark" %% "spark-core" % "1.4.1" //% "provide
 
 libraryDependencies += "org.json4s" % "json4s-jackson_2.10" % "3.2.11"
 
+libraryDependencies ++= Seq("com.typesafe.scala-logging" %% "scala-logging-slf4j" % "2.1.2",
+"com.typesafe" %% "scalalogging-slf4j" % "1.0.1",
+"org.slf4j" % "slf4j-api" % "1.7.1",
+"org.slf4j" % "log4j-over-slf4j" % "1.7.1",  // for any java classes looking for this
+"ch.qos.logback" % "logback-classic" % "1.0.3")
+
 unmanagedJars in Compile += file("/home/cnavarro/workspace/mixedemotions/me_extractors/BRMPilot_y1/lib/entity-linking-1.1.jar")
 
 unmanagedJars in Compile += file("/home/cnavarro/workspace/mixedemotions/me_extractors/BRMPilot_y1/lib/TweetSentiClassifier.jar")
