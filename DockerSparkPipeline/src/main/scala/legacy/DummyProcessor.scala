@@ -28,3 +28,9 @@ class DummyProcessor extends Serializable {
     "result3", Calendar.getInstance().getTime().toString)
 
 }
+
+object DummyProcessor{
+  def main(args: Array[String]) {
+    println(Calendar.getInstance().getTime().toString)
+  }
+}

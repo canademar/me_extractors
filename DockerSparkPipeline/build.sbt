@@ -1,6 +1,6 @@
 name := "DockerSparkPipeline"
 
-version := "0.5"
+version := "0.8"
 
 scalaVersion := "2.10.4"
 

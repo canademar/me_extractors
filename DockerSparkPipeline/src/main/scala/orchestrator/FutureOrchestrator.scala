@@ -91,6 +91,51 @@ object FutureOrchestrator {
     sys.exit(1)
   }
 
+  def saveToElasticsearch(input : List[Future[String]], configurationMap: Config): Unit =  {
+
+    val esIP = configurationMap.getString("elasticsearch.ip")
+    val esPort = configurationMap.getString("elasticsearch.port").toInt
+    val esClusterName = configurationMap.getString("elasticsearch.clusterName")
+    val indexName = configurationMap.getString("elasticsearch.indexName")
+    val documentType = configurationMap.getString("elasticsearch.documentType")
+    var badPracticeResults = new scala.collection.mutable.MutableList[String]()
+    for(result<-input){
+      result.onComplete{
+        case Success(value)=>{
+          badPracticeResults.+=(value)
+        }
+        case Failure(e) => {
+          logger.error(s"Error: ${e.getMessage}")
+        }
+      }
+    }
+
+
+    println(s"Going to persist ${badPracticeResults.length}")
+
+
+
+    ElasticsearchPersistor.persistWithoutFormatting(badPracticeResults.toList, esIP, esPort , esClusterName, indexName, documentType)
+
+
+  }
+
+  def extractTweet(input: Future[String]): Option[String] = {
+    input.onComplete {
+        case Success(value)=>{
+          return Some(value)
+        }
+        case Failure(e) => {
+          println(s"Error: ${e.getMessage}")
+          return None
+        }
+    }
+    return None
+  }
+
+
+
+
 
 
 
@@ -152,6 +197,7 @@ object FutureOrchestrator {
     println(s"\nNumber of items after processing (resultJSON): ${futureResults.length}\n")
 
     saveToFile(futureResults,configurationMap.getString("outputFilePath"), configurationMap.getInt("executionTimeoutSeconds") seconds)
+    saveToElasticsearch(futureResults, configurationMap)
 
 
 
