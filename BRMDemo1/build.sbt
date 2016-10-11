@@ -1,6 +1,6 @@
-name := "BRMDemo2"
+name := "BRMDemo1"
 
-version := "1.0"
+version := "5.0"
 
 scalaVersion := "2.10.5"
 

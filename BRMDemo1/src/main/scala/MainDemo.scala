@@ -1,3 +1,4 @@
+import java.io.{PrintWriter,File}
 import java.net.URL
 import java.text.Normalizer
 
@@ -36,13 +37,13 @@ object MainDemo {
 
     var jsonLines = sc.parallelize(Array[String]())
 
-    var z = 0
+    var hasMoreDocuments = true
 
     var i = 0
 
     println("*** Quering Elasticsearch")
 
-    while(z == 0) {
+    while(hasMoreDocuments) {
       // 1. Loading data from ES
 
       val elastic_query = "keyword:BBVA AND lang:" + lang
@@ -52,13 +53,21 @@ object MainDemo {
       }.await // don't block in real code
 
       if (resp.getHits.getHits.size <= 0) {
-        z = 1
+        hasMoreDocuments = false
       }
+      if(i>16){
+        hasMoreDocuments = false
+      }
+
+
 
 
       val arrayData = JSON.parseFull(resp.toString).asInstanceOf[Some[Map[String, Any]]].getOrElse(Map[String, Any]())
         .get("hits").asInstanceOf[Some[Map[String, Any]]].getOrElse(Map[String, Any]()).get("hits")
         .asInstanceOf[Some[List[Map[String, Any]]]].getOrElse(List(Map[String, Any]())).toArray.map(x => write(x))
+
+
+
 
       val newLines = sc.parallelize(arrayData)
 
@@ -66,9 +75,13 @@ object MainDemo {
 
       i = i + 1
 
-      println("\nIteration: " + i + " - Total hits: " + resp.getHits.getHits.size + " - z = " + z + "\n")
+      //println("Iteration: " + i + " - Total hits: " + resp.getHits.getHits.size + ". Has more tweets? " + hasMoreDocuments + "\n")
 
     }
+
+    println("Response docs: " + jsonLines.first)
+
+    //println("Very bad idea, but take it as a test. Num of lines:"+ jsonLines.count())
 
     client.close()
 
@@ -102,8 +115,9 @@ object MainDemo {
 
 
 
-    val finalResultMap = sentimentResultsString.map(x=> JSON.parseFull(x).asInstanceOf[Some[Map[String,Any]]].getOrElse
-      (Map[String, Any]()).get("_source").asInstanceOf[Some[Map[String,Any]]].get)
+    val finalResultMap = sentimentResultsString.map(x=> JSON.parseFull(x).asInstanceOf[Some[Map[String,Any]]].getOrElse(Map[String, Any]()))
+    //val finalResultMap = sentimentResultsString.map(x=> JSON.parseFull(x).asInstanceOf[Some[Map[String,Any]]].getOrElse
+    //  (Map[String, Any]()).get("_source").asInstanceOf[Some[Map[String,Any]]].get)
 
     val example = sentimentResultsString.first()
 
@@ -115,13 +129,64 @@ object MainDemo {
 
     println("*** Persisting in ES " + finalResultMap.count())
 
-    finalResultMap.foreachPartition( x => {
+
 
     val uri2 = ElasticsearchClientUri("elasticsearch://" + ip_host + ":9300")
     val settings2 = ImmutableSettings.settingsBuilder().put("cluster.name", cluster_name).build()
     val client2 = ElasticClient.remote(settings2, uri2)
 
+    val collectedResults = finalResultMap.collect
+
+
+    val pw = new PrintWriter(new File("/home/cnavarro/ids.txt" ))
+
+
+    for(result<-collectedResults){
+
+      val record = result.getOrElse("_source", Map[String,Any]()) .asInstanceOf[Map[String, Any]]
+
+
+
+        val resp2 = client2.execute {
+          index into "myanalyzed" / "tweet" fields(
+            "lang" -> record.getOrElse("lang", "").asInstanceOf[String],
+            "screen_name" -> record.getOrElse("screen_name", "").asInstanceOf[String],
+            "keyword" -> record.getOrElse("keyword", "").asInstanceOf[String],
+            "text" -> record.getOrElse("text", "").asInstanceOf[String],
+            "created_at" -> record.getOrElse("created_at", "").asInstanceOf[String],
+            "hashtags" -> record.getOrElse("hashtags", "").asInstanceOf[List[String]].toArray,
+            "topics" -> record.getOrElse("topics", "").asInstanceOf[List[String]].toArray,
+            "project" -> record.getOrElse("project", "").asInstanceOf[String],
+            "concepts" -> record.getOrElse("concepts", "").asInstanceOf[List[String]].toArray,
+            "mentions" -> record.getOrElse("mentions", "").asInstanceOf[List[String]].toArray,
+            "sentiment" -> record.getOrElse("sentiment", "").asInstanceOf[String],
+            "id" -> record.getOrElse("id", ""),
+            "index_time" -> System.currentTimeMillis()
+
+            ) id result.getOrElse("_id", "").asInstanceOf[String]
+        }.await // don't block in real code
+      pw.write(""+record.getOrElse("id", "").asInstanceOf[Double])
+      pw.write("\n")
+      pw.write(""+result.getOrElse("_id", "").asInstanceOf[String])
+      pw.write("\n")
+
+
+
+
+
+    }
+    client2.close()
+    pw.close
+
+    /*finalResultMap.foreachPartition( x => {
+
+      val uri2 = ElasticsearchClientUri("elasticsearch://" + ip_host + ":9300")
+      val settings2 = ImmutableSettings.settingsBuilder().put("cluster.name", cluster_name).build()
+      val client2 = ElasticClient.remote(settings2, uri2)
+      var partitionCount = 0
+
       while(x.hasNext) {
+        partitionCount +=1
 
         val record = x.next()
 
@@ -145,8 +210,10 @@ object MainDemo {
       }
 
       client2.close()
+      println("This partition inserted: " + partitionCount)
 
-    })
+    })*/
+
 
   }
 
