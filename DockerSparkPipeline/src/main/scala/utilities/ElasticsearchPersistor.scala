@@ -1,5 +1,8 @@
 package utilities
 
+import java.text.SimpleDateFormat
+import java.util.Calendar
+
 import com.sksamuel.elastic4s.ElasticDsl.{bulk, index, _}
 import com.sksamuel.elastic4s.{ElasticClient, ElasticsearchClientUri}
 import org.apache.spark.rdd.RDD
@@ -16,8 +19,10 @@ import scala.util.parsing.json.JSON
 class ElasticsearchPersistor(val client: ElasticClient, val indexName: String) {
 
   def this(ip: String, port: Int, clusterName: String, indexName: String){
+
     this(ElasticClient.remote(ImmutableSettings.settingsBuilder().put("cluster.name", clusterName).build(),
-      ElasticsearchClientUri("elasticsearch://" + ip + ":9300")),     indexName)
+      ElasticsearchClientUri(s"elasticsearch://${ip}:${port}")),     indexName)
+    println(s"elasticsearch://${ip}:${port}")
   }
 
 
@@ -64,12 +69,17 @@ class ElasticsearchPersistor(val client: ElasticClient, val indexName: String) {
 
   }
 
-  def saveTweets(tweets: Seq[Map[String,Any]]): Unit ={
+  def saveTweets(tweets: Seq[Map[String,Any]], documentType: String): Unit ={
     println("Bulk Bogan!")
      val resp = client.execute {
        bulk(
          for(tweet<-tweets) yield {
-           index into indexName / "tweet" fields (tweet) id tweet("id")
+           println(tweet)
+           if(tweet.contains("id")) {
+             index into indexName / documentType fields (tweet) id tweet("id")
+           }else{
+             index into indexName / documentType fields (tweet) //id tweet("id")
+           }
          }
            )
        }
@@ -110,7 +120,7 @@ object ElasticsearchPersistor {
     val chunks = lines.grouped(100)
 
     for(chunk<-chunks) {
-      persistor.saveTweets(chunk)
+      persistor.saveTweets(chunk, "tweet")
     }
 
   }
@@ -143,6 +153,7 @@ object ElasticsearchPersistor {
 
     val rawTweet  = tweet("raw").asInstanceOf[Map[String,Any]]
     val projectId = tweet("project_id").asInstanceOf[Double].round.toInt
+    println("TWWWWEEEEET")
     Map("lang" -> tweet("lang").asInstanceOf[String],
         "raw" ->  rawTweet,
         "brand" -> tweet("brand").asInstanceOf[String],
@@ -186,10 +197,10 @@ object ElasticsearchPersistor {
 
   def persistTweetsWithoutSpark(input: List[String], ip: String, port: Int, clusterName: String,
                            indexName: String): Unit = {
-    println("~~~~~~~~~~~~~~~~~going to persist in " + "ip" + port.toString + "clusterName")
+    println(s"~~~~~~~~~~~~~~~~~going to persist in ${ip}:${port.toString} at ${clusterName}")
 
 
-    val parsedTweets = input.map(x=> JSON.parseFull(x).asInstanceOf[Some[Map[String,Any]]].getOrElse(Map[String,Any]()))
+    val parsedTweets = input.map(x=> JSON.parseFull(x).asInstanceOf[Option[Map[String,Any]]].getOrElse(Map[String,Any]()))
 
     val formattedTweets = parsedTweets.map(tweet => formatTweet(tweet))
 
@@ -198,27 +209,63 @@ object ElasticsearchPersistor {
     val chunks = formattedTweets.grouped(100)
 
     for(chunk<-chunks) {
-      persistor.saveTweets(chunk)
+      persistor.saveTweets(chunk, "tweet")
     }
 
   }
 
+  def persistWithoutFormatting(input: List[String], ip: String, port: Int, clusterName: String,
+                                indexName: String, documentType: String): Unit = {
+    println(s"~~~~~~~~~~~~~~~~~going to persist in ${ip}:${port.toString} at ${clusterName}")
+
+
+    val parsedInputs = input.map(x=> JSON.parseFull(x).asInstanceOf[Option[Map[String,Any]]].getOrElse(Map[String,Any]()))
+    val filteredInputs = parsedInputs.filter(x=>x.keySet.size>0).map(x=>x+("indextime"->now))
+
+
+    //val formattedTweets = parsedTweets.map(tweet => formatTweet(tweet))
+
+    val persistor : ElasticsearchPersistor = new ElasticsearchPersistor(ip, port, clusterName, indexName)
+
+    val chunks = filteredInputs.grouped(100)
+
+    for(chunk<-chunks) {
+      persistor.saveTweets(chunk, documentType)
+    }
+
+  }
+
+  def now(): String = {
+    val time = Calendar.getInstance().getTime()
+    val formatter = new SimpleDateFormat("yyyyMMddHHmmss")
+    formatter.format(time)
+  }
+
+
 
   def main (args: Array[String]) {
+    val ip = "localhost"
+    val port = 9300
+    val clusterName = "elasticsearch"
+    val indexName = "myanalyzed"
+
+/*
     val ip = "mixednode2"
     val port = 9300
     val clusterName = "Mixedemotions Elasticsearch"
     val indexName = "myanalyzed"
+  */
     val persistor : ElasticsearchPersistor = new ElasticsearchPersistor(ip, port, clusterName, indexName)
     val resp = persistor.client.execute {
       index into "myanalyzed" / "test" fields(
 
         "brand" -> "test",
-        "text" -> "some text",
+        "text" -> "some new text",
         "index_time" -> System.currentTimeMillis()
 
-        ) id "test1111"
+        ) id "test11211"
     }.await
+    println("Finished, I guess")
 
   }
 }

@@ -4,6 +4,7 @@ import org.apache.spark.rdd.RDD
 import org.json4s.NoTypeHints
 import org.json4s.jackson.Serialization
 import org.json4s.jackson.Serialization._
+import utilities.RequestExecutor
 
 import scala.util.parsing.json.JSON
 
@@ -46,7 +47,7 @@ object UPMSentimentAnalysisService {
      val query = composeQuery(input, serviceHost)
       println(query)
      try {
-       val response = NetworkAnalysisService.executeGetRequest(query).asInstanceOf[Map[String,Any]]
+       val response = RequestExecutor.executeGetRequest(query).asInstanceOf[Map[String,Any]]
        val sentiment = getSentimentFromResponse(response)
        collection.mutable.Map(sentiment.toSeq: _*)
      }catch {
@@ -94,7 +95,7 @@ object UPMSentimentAnalysisService {
       val mutableMap = collection.mutable.Map(inputMap.toSeq: _*)
       val query = composeQuery(mutableMap, "senpy.cluster.gsi.dit.upm.es")
       println(query)
-      val response = NetworkAnalysisService.executeGetRequest(query).asInstanceOf[Map[String,Any]]
+      val response = RequestExecutor.executeGetRequest(query).asInstanceOf[Map[String,Any]]
       val sentiment = getSentimentFromResponse(response)
       println(sentiment)
     }

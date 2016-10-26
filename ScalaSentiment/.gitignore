@@ -1,0 +1,5 @@
+sentiment_resources.tar.gz
+resources/data/
+resources/embeddings/
+resources/model/
+resources/sometweets.txt

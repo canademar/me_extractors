@@ -5,7 +5,7 @@ import org.apache.spark.rdd.RDD
 import scala.util.parsing.json.JSON
 import scalaj.http.{HttpResponse, _}
 
-class NetworkAnalysisService {
+class RequestExecutor {
 
   // The elements of the original RDD are separately processed. the mapPartitions method is used to optimize performance
   def processViaRestService(rdd: RDD[String]): RDD[String] = rdd.mapPartitions(x => executeRestRequest(composeQuery(x)))
@@ -46,7 +46,19 @@ class NetworkAnalysisService {
 
 }
 
-object NetworkAnalysisService {
+object RequestExecutor {
+
+
+  def executeRequest(method: String, query: String, body: String = None): Any ={
+    if(method=="POST"){
+      executePostRequest(query, body)
+    }else{
+      executeGetRequest(query)
+    }
+  }
+
+
+
   // Each query is delivered to the service and the response is stored
   def executeGetRequest(query: String): Any = {
     // The REST service is queried and the response (JSON format) is obtained
@@ -71,6 +83,37 @@ object NetworkAnalysisService {
       }
       case x: Any => x
     }
+    }catch{
+      case e: Exception => {
+        println("Unexpected error executing get request")
+        Map()
+      }
+    }
+  }
+
+  def executePostRequest(query: String, postBody:String): Any = {
+    // The REST service is queried and the response (JSON format) is obtained
+    println("Waiting")
+    Thread.sleep(500)
+    try {
+      val response: HttpResponse[String] = Http(query).postData(postBody).timeout(connTimeoutMs = 10000, readTimeoutMs = 50000).asString
+      if (response.isError) {
+        println(s"HttpError: $query . ${response.body} ${response.code}")
+        Map()
+      }
+      val body = response.body
+      val jsoned = JSON.parseFull(body)
+      val toMatch = jsoned.getOrElse(None)
+      toMatch match {
+        case None => {
+          if (body.length != 0) {
+            body
+          } else {
+            Map()
+          }
+        }
+        case x: Any => x
+      }
     }catch{
       case e: Exception => {
         println("Unexpected error executing get request")

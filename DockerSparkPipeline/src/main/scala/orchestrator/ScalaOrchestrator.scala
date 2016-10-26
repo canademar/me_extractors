@@ -70,6 +70,26 @@ object ScalaOrchestrator {
     bw.close()
   }
 
+
+  def saveToElasticsearch(items : List[String], configurationMap: Config): Unit =  {
+
+    val esIP = configurationMap.getString("elasticsearch.ip")
+    val esPort = configurationMap.getString("elasticsearch.port").toInt
+    val esClusterName = configurationMap.getString("elasticsearch.clusterName")
+    val indexName = configurationMap.getString("elasticsearch.indexName")
+    val documentType = configurationMap.getString("elasticsearch.documentType")
+
+
+    println(s"Going to persist ${items.length}")
+
+
+
+    ElasticsearchPersistor.persistWithoutFormatting(items.toList, esIP, esPort , esClusterName, indexName,documentType)
+
+
+  }
+
+
   def usage(): Unit = {
     println(s"Missing params. There should be 2 params: {confFilePath} {inputFilePath} ")
     sys.exit(1)
@@ -136,35 +156,17 @@ object ScalaOrchestrator {
 
     val resultJSON = compFunc(data)
 
-
-    // Data are processed by the selected modules (composed function)
-    //val resultJSON = compFunc(data)
     val numResultJSON = resultJSON.length
+
+
 
     println("\nNumber of items after processing (resultJSON): " + numResultJSON + "\n")
 
-    val collected = resultJSON.toList
-    println("Reactivate persistence")
-    //persistWithoutSpark(collected)
-    //collected.map(println(_))
-    println(s"Num results: ${collected.length}")
-
     saveToFile(resultJSON,configurationMap.getString("outputFilePath"))
+    saveToElasticsearch(resultJSON, configurationMap)
 
 
-    /*val resultEn = resultJSON.map(x=> JSON.parseFull(x).asInstanceOf[Some[Map[String,Any]]].getOrElse(Map[String,Any]())).filter(x=> x.getOrElse("lang","").asInstanceOf[String]=="en")
-    val numResultEn = resultEn.count()
 
-    println("\nNumber of items (in english) after processing (resultEn): " + numResultEn + "\n")
-
-    if (numResultEn>10){
-      val rEn = resultEn.take(10)
-      rEn.foreach(println(_))
-    }
-    else{
-      println("No data in english found")
-    }
-    */
 
   }
 
