@@ -1,9 +1,9 @@
 {"mappings": 
-    {"text_review": 
+    {"video_review": 
          {"properties": 
                {
                 "indextime": {"type": "date","format":"yyyyMMddHHmmss"},
-                "created_at": {"type": "date", "format":"E MMM dd HH:mm:ss Z yyyy"},
+                "created_at": {"type": "date", "format":"yyyy-MM-dd HH:mm:ss"},
                 "detected_entities": {"type":"string", "index": "not_analyzed"},
                 "topics": {"type":"string", "index": "not_analyzed"},
                 "project_name": {"type":"string", "index": "not_analyzed"},
