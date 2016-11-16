@@ -146,9 +146,19 @@ def stream(query, projects, t):
                                 break 
                     # if every word from keyword is in tweet, save to file
                     if is_tweet:
+                         if has_not_words(tweet["text"],project["nots"]):
+                             #print "Has not words: '%s' in '%s'" % (project["nots"], tweet["text"])
+                             print "Has not words "
+                             continue
                          print "%s - Tweet for %s" % (datetime.now(), project["name"])
+                         stop=False
+                         if(tweet['geo']!=None):
+                             print "Inverting geo"
+                             (lat,lon) = tweet['geo']['coordinates']
+                             tweet['geo']['coordinates'] = [lon, lat]
                          with open(filename + ".txt", "a") as fw:
                              tweet['project_id'] = project_id
+                             tweet['project_name'] = project['name']
                              dumped_json = json.dumps(tweet)
                              fw.write(dumped_json)
                              fw.write("\n")
@@ -188,6 +198,12 @@ def parse_twitter_time(twitter_time):
     date = datetime.strptime(twitter_time, "%a %b %d %H:%M:%S %Y")
     return date.strftime("%Y%m%d%H%M%S")
 
+def has_not_words(text, nots_array):
+    for not_phrase in nots_array:
+        match = re.search(not_phrase,  text, re.IGNORECASE)
+        if match:
+           return True
+    return False
 
 if __name__ == "__main__":
     main()
