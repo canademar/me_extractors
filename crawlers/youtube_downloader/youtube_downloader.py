@@ -27,12 +27,14 @@ def main(argv):
     parser.add_argument('--update_file',action = 'store', dest='update_file')
     parser.add_argument('--fetch',action = 'store_true', dest='fetch')
     parser.add_argument('--fetchallformats',action = 'store_true', dest='fetchallformats')
-    parser.add_argument('--outputdir',action = 'store', dest='outputdir', default="/tmp/youtube_output/")
-    parser.add_argument('--outputtemplate',action = 'store', dest='outputtemplate', default="%(id)s_%(format)s.%(ext)s")
+    parser.add_argument('--withcomments',action = 'store_true', dest='withcomments')
+    parser.add_argument('--outputdir',action = 'store', dest='outputdir', default="/var/data/inputs/video/")
+    parser.add_argument('--outputtemplate',action = 'store', dest='outputtemplate', default="%(id)s.%(ext)s")
     parser.add_argument('--quiet',action = 'store_true', dest='quiet')
     parser.add_argument('--version', action='version', version='%(prog)s 1.0')
     parser.add_argument('--project_id', action = 'store', dest='project_id')
     parser.add_argument('--project_name', action = 'store', dest='project_name')
+    parser.add_argument('--pagination', action= 'store', dest='pagination', default=1)
     
     #parse arguments
     args = parser.parse_args()
@@ -69,7 +71,7 @@ def main(argv):
     # search mode enabled
     elif args.search:  
         #default date 
-        date = '2015-01-01T00:00:00Z'
+        date = '2016-01-01T00:00:00Z'
         if args.date:
             date = args.date   
         
@@ -180,9 +182,10 @@ def videoID_download(videoId, service, json_dictionary, args):
     except:
         sys.stderr.write('Error: Can\'t get rating of video  - or 404 request error\n')
         exit(1)
-
-    video_dictionary['comments'] = list()
-    video_dictionary.update(get_list_of_comments_threads(videoId, service, video_dictionary))
+    
+    if args.withcomments:
+        video_dictionary['comments'] = list()
+        video_dictionary.update(get_list_of_comments_threads(videoId, service, video_dictionary))
     #add path to video file (only if exist --fetch)
     if args.fetch:
         video_dictionary['video'] = download_video(videoId, args.fetchallformats, args.outputdir, args.outputtemplate, args.quiet)
@@ -214,7 +217,9 @@ def videoID_download(videoId, service, json_dictionary, args):
 def search_video( service, json_dictionary, date, args):
     next_page_token = True
     search_resource = service.search()
-    search_request = search_resource.list ( part = 'snippet', maxResults = 50, publishedAfter = date, q = args.search, type = 'video')
+    search_request = search_resource.list ( part = 'snippet', maxResults = 50, publishedAfter = date, q = args.search, type = 'video')#, relevanceLanguage= 'en')
+    max_pagination = args.pagination
+    current_page = 1
     #iterating while there is next page
     while next_page_token:
         try:
@@ -222,8 +227,9 @@ def search_video( service, json_dictionary, date, args):
         except:
             sys.stderr.write('Error: Wrong ID/username - or 404 request error\n')
             exit(1)
-        if 'nextPageToken' in search_list.keys():
+        if 'nextPageToken' in search_list.keys() and current_page<max_pagination:
             next_page_token = search_list['nextPageToken']
+            pagination+=1
         else:
             next_page_token = False
         #checking if video list has valuable informations
@@ -256,9 +262,10 @@ def search_video( service, json_dictionary, date, args):
                     video_dictionary['like_count'] = rating['statistics']['likeCount'] if 'likeCount' in rating['statistics'] else -1
                     video_dictionary['dislike_count'] = rating['statistics']['dislikeCount'] if 'dislikeCount' in rating['statistics'] else -1
                 #calling function that collects all comments of an activity
-                video_dictionary['comments'] = list()
-                video_dictionary.update(get_list_of_comments_threads(video['id']['videoId'],
-                service, video_dictionary))
+                if args.withcomments:
+                    video_dictionary['comments'] = list()
+                    video_dictionary.update(get_list_of_comments_threads(video['id']['videoId'],
+                    service, video_dictionary))
                 
                 json_dictionary['videos'].append(video_dictionary)
                 
@@ -623,7 +630,7 @@ class getNameAndPath(object):
         return self.tmp
 
 #function download video
-def download_video(videoId, fetchAllFormats, outputdir="/tmp/youtube_output/", outputtemplate="%(id)s_%(format)s.%(ext)s", quiet=False):
+def download_video(videoId, fetchAllFormats, outputdir="/tmp/youtube_output/", outputtemplate="%(id)s", quiet=False):
     nameAndPath = getNameAndPath()
 
     ydl_opts = {
