@@ -1,0 +1,24 @@
+[
+    {
+        "name": "Motorola", 
+        "langs": [ "en",  "es"], 
+        "synonyms": [ "motorola",  "moto_support",  "motorolaes"], 
+        "nots": [], 
+        "id": 8
+    }, 
+    {
+        "name": "Samsung", 
+        "langs": [ "en",  "es"], 
+        "synonyms": ["samsung", "SamsungEspana",  "SamsungResponde", "SamsungMobile"], 
+        "nots": [], 
+        "id": 9
+    },
+    {
+        "name": "Huawei", 
+        "langs": [ "en",  "es"], 
+        "synonyms": [ "Huawei",  "HuaweiSpain"], 
+        "nots": [], 
+        "id": 10
+    }
+
+]

@@ -18,7 +18,7 @@ def download_video(project, video_info, video_date):
     output_video_dir = VIDEO_DIR % (video_date.replace("T00:00:00Z", ""), project_id)
     subprocess.check_call(["mkdir", "-p", output_video_dir])
     command =  DOWNLOAD_COMMAND % (video_id, project_id, project_name, output_video_dir)
-    print command
+    print "Downloading video with: %s" % command
     result = subprocess.check_output(command.split(" "))
     output_info_dir = INFO_DIR % (video_date.replace("T00:00:00Z", ""), project_id)
     print "Info dir: %s" % output_info_dir
@@ -31,13 +31,13 @@ def download_video(project, video_info, video_date):
 
 
 def download_videos(project, video_infos):
-    for video_info in video_infos['videos']:
+    for video_info in video_infos['videos'][:4]:
         download_video(project, video_info, video_infos['date'])
 
 
 #python youtube_downloader.py --search=Samsung --date=2016-11-23T00:00:00Z
 def search_videos(project, search_date):
-    keyword=project['keyword']
+    keyword=project['name']
     project_id=project['id']
     command = "python youtube_downloader.py --search=%s --date=%s" % (keyword, search_date)
     print "Searching with: '%s'" % command
@@ -52,11 +52,13 @@ def search_videos(project, search_date):
     
 
 def get_projects():
-    project = {"keyword":"Samsung", "id":9, "name":"Samsung"}
-    return [project]
+    with open("projects.json", "r") as projects_json:
+        projects_str = projects_json.read()
+        projects = json.loads(projects_str)
+        return projects
 
 def yesterday_str():
-    yesterday = datetime.now() - timedelta(1)
+    yesterday = datetime.now() - timedelta(2)
     return yesterday.strftime("%Y-%m-%dT00:00:00Z")
 
 def now_str():
@@ -66,11 +68,12 @@ def now_str():
 def main():
     print "Starting youtube manager"
     projects = get_projects()
+    print projects
     search_date = yesterday_str()
-    for project in projects:
-        #video_infos = search_videos(project, search_date)
-        video_text = '{"date": "2016-11-23T00:00:00Z", "videos": [{"view_count": "314", "description": "Mời các bạn truy cập website: http://clickbuy.com.vn để tham khảo mức giá của rất nhiều dòng sản phẩm như Apple, Samsung, HTC, Sony, LG, Xiaomi... Sony: ...", "title": "Góc Speedtest| Samsung Galaxy On7 & Redmi 4 Prime| Cùng chip s625 máy nào mạnh hơn??", "video_id": "vRBwzXGyNpk", "dislike_count": "1", "channel_id": "UCFoD8gJdm_ID3Qw3-yU8iyw", "like_count": "35", "published": "2016-11-24T13:00:04.000Z"}]}'
-        video_infos = json.loads(video_text)
+    for project in projects:       
+        video_infos = search_videos(project, search_date)
+        #video_text = '{"date": "2016-11-23T00:00:00Z", "videos": [{"view_count": "314", "description": "Mời các bạn truy cập website: http://clickbuy.com.vn để tham khảo mức giá của rất nhiều dòng sản phẩm như Apple, Samsung, HTC, Sony, LG, Xiaomi... Sony: ...", "title": "Góc Speedtest| Samsung Galaxy On7 & Redmi 4 Prime| Cùng chip s625 máy nào mạnh hơn??", "video_id": "vRBwzXGyNpk", "dislike_count": "1", "channel_id": "UCFoD8gJdm_ID3Qw3-yU8iyw", "like_count": "35", "published": "2016-11-24T13:00:04.000Z"}]}'
+        #video_infos = json.loads(video_text)
         
         print video_infos['videos']
         print download_videos(project, video_infos)
