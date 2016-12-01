@@ -10,7 +10,10 @@
                 "video":
                          {"properties":
                              { 
-                             "channelTitle": {"type":"string", "index": "not_analyzed"}
+                             "channelTitle": {"type":"string", "index": "not_analyzed"},
+                             "dislike_count": {"type":"integer"},
+                             "like_count": {"type":"integer"},
+                             "view_count": {"type":"integer"}
                              }
                          }
 
