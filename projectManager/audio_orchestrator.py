@@ -17,7 +17,7 @@ def main():
     datestr = yesterday.strftime("%Y-%m-%d")
     for project in projects:
         print "Working on project %s" % project
-        output.write("Working on project %s" % project)
+        output.write("Working on project %s\n" % project)
         directory = "%s%s/%s/video_info/" % (INPUTS_FOLDER, datestr, project)
     
         input_files = get_input_files(directory)
@@ -25,7 +25,7 @@ def main():
             command = "java -cp %s %s %s %s" % (JAR_FILE, MAIN_FILE, CONF_FILE, input_file)
             print "Executing '%s'" % command
             output.write("[%s]: Execution '%s'\n" % (now(), command))
-            #code = subprocess.call(command.split(" "))
+            code = subprocess.call(command.split(" "))
             if code == 0:
                 output.write("[%s]: Success!\n"% now())
             else:
