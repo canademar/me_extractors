@@ -1,0 +1,11 @@
+{
+  "zk": "zk://mixednode1back.stratio.com:2181,mixednode2back.stratio.com:2181,mixednode3back.stratio.com:2181/mesos",
+  "refreshSeconds": 60,
+  "ttl": 60,
+  "domain": "mesos",
+  "port": 53,
+  "resolvers": ["213.133.98.98", "213.133.99.99", "213.133.100.100"],
+  "timeout": 5,
+  "email": "root.mesos-dns.mesos",
+  "masters": ["192.168.1.12:5050", "192.168.1.11:5050"]
+}
