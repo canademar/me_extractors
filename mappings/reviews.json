@@ -4,18 +4,74 @@
                {
                 "indextime": {"type": "date","format":"yyyyMMddHHmmss"},
                 "created_at": {"type": "date", "format":"E MMM dd HH:mm:ss Z yyyy"},
-                "entities": {"type":"string", "index": "not_analyzed"},
+                "detected_entities": {"type":"string", "index": "not_analyzed"},
                 "topics": {"type":"string", "index": "not_analyzed"},
+                "brands": {"type":"string", "index": "not_analyzed"},
+                "lang": {"type":"string", "index": "not_analyzed"},
+                "project_name": {"type":"string", "index": "not_analyzed"},
+                "sentiment": {"type": "double"},
+                "source": {"type":"string", "index": "not_analyzed"},
+                "synonyms": {"type":"string", "index": "not_analyzed"},
+                "synonym_found": {"type":"string", "index": "not_analyzed"},
+                "url": {"type":"string", "index": "not_analyzed"},
                 "emotions":
                          {"properties":
                              { 
                              "emotion": {"type":"string", "index": "not_analyzed"}
                              }
                          },
+                "entities":
+                         {"properties":
+                             { 
+                               "hashtags": {
+                                  "properties": {
+                                    "text": {"type":"string", "index": "not_analyzed"}
+                                  }
+                               },                             
+                               "urls": {
+                                  "properties": {
+                                    "url": {"type":"string", "index": "not_analyzed"}
+                                  }
+                               }
+                            }
+                         },
+                "entity_linking":
+                         {"properties":
+                             { 
+                             "URI": {"type":"string", "index": "not_analyzed"},
+                             "EntityText": {"type":"string", "index": "not_analyzed"},
+                             "EntityType": {"type":"string", "index": "not_analyzed"}
+                             }
+                         },
+                "extended_tweet":
+                         {"properties":
+                             { 
+                             "full_text": {"type":"string", "index": "not_analyzed"}
+                             }
+                         },
+                "place":
+                         {"properties":
+                             { 
+                             "full_name": {"type":"string", "index": "not_analyzed"},
+                             "name": {"type":"string", "index": "not_analyzed"},
+                             "place_type": {"type":"string", "index": "not_analyzed"},
+                             "country": {"type":"string", "index": "not_analyzed"},
+                             "country_code": {"type":"string", "index": "not_analyzed"}
+                             }
+                         },
+                "user":
+                         {"properties":
+                             { 
+                             "name": {"type":"string", "index": "not_analyzed"},
+                             "screen_name": {"type":"string", "index": "not_analyzed"},
+                             "lang": {"type":"string", "index": "not_analyzed"},
+                             "location": {"type":"string", "index": "not_analyzed"}
+                             }
+                         },
                 "geo":
                       {"properties":
                         {
-                         "coordinates": {"type":"geo_point"}
+                         "coordinates": {"type":"geo_point", "geohash_precision": 8}
                         }
                       }
 
