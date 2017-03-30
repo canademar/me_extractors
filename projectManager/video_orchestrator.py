@@ -3,19 +3,22 @@ import glob, os
 import subprocess
 from datetime import date, timedelta,datetime
 JAR_FILE = "MixedEmotionsOrchestrator-assembly-1.0.jar"
-CONF_FILE = "conf/textPipeline.conf"
-INPUTS_FOLDER  = "/var/data/inputs/projects/"
+CONF_FILE = "conf/youtubeVideoProcessing.conf"
+INPUTS_FOLDER  = "/var/data/inputs/videos/"
 
 def main():
-    output = open("log/log_small_orchestrator.log", "a")
-    print "Starting small orchestrator"
-    output.write("[%s]: Starting small orchestrator\n" % now())
-    projects = [1,2,3,4,5,8,9,10]
+    output = open("log/log_video_orchestrator.log", "a")
+    print "Starting video orchestrator"
+    output.write("[%s]: Starting video orchestrator\n" % now())
+    projects = [8,9,10]
     today = date.today()
-    yesterday = today - timedelta(1)
+    yesterday = today - timedelta(2)
     datestr = yesterday.strftime("%Y-%m-%d")
     for project in projects:
-        directory = "%s%s/%s/twitter/" % (INPUTS_FOLDER, datestr, project)
+        print "Working on project %s" % project
+        output.write("Working on project %s\n" % project)
+        directory = "%s%s/%s/video_info/" % (INPUTS_FOLDER, datestr, project)
+    
         input_files = get_input_files(directory)
         for input_file in input_files:
             command = "java -jar %s %s %s" % (JAR_FILE, CONF_FILE, input_file)
@@ -26,13 +29,13 @@ def main():
                 output.write("[%s]: Success!\n"% now())
             else:
                 output.write("[%s]: Error!!!!!\n"% now())
-    print "----small orchestrator finished"
+    print "----video orchestrator finished"
     output.write("[%s]: Finished\n"% now())
 
 def get_input_files(directory):
     filenames_array = [ filenames for root, dirnames, filenames in os.walk(directory)]
     files  = [val for sublist in filenames_array for val in sublist]
-    return ["%s%s" %(directory, file) for file in files if file.endswith(".txt")]
+    return ["%s%s" %(directory, file) for file in files if file.endswith(".json")]
 
 def now():
     return datetime.now().strftime("%Y-%m-%dT%H:%M:%S")

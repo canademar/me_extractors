@@ -2,8 +2,7 @@
 import glob, os
 import subprocess
 from datetime import date, timedelta,datetime
-JAR_FILE = "MixedEmotionsExampleOrchestrator-assembly-0.14.jar"
-MAIN_FILE = "orchestrator.ListFutureOrchestrator"
+JAR_FILE = "MixedEmotionsOrchestrator-assembly-1.0.jar"
 CONF_FILE = "conf/youtubeAudioProcessing.conf"
 INPUTS_FOLDER  = "/var/data/inputs/videos/"
 
@@ -22,7 +21,7 @@ def main():
     
         input_files = get_input_files(directory)
         for input_file in input_files:
-            command = "java -cp %s %s %s %s" % (JAR_FILE, MAIN_FILE, CONF_FILE, input_file)
+            command = "java -jar %s %s %s" % (JAR_FILE, CONF_FILE, input_file)
             print "Executing '%s'" % command
             output.write("[%s]: Execution '%s'\n" % (now(), command))
             code = subprocess.call(command.split(" "))

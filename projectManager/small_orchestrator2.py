@@ -2,17 +2,17 @@
 import glob, os
 import subprocess
 from datetime import date, timedelta,datetime
-JAR_FILE = "MixedEmotionsOrchestrator-assembly-1.0.jar"
-CONF_FILE = "conf/textPipeline.conf"
+JAR_FILE = "MixedEmotionsOrchestrator-assembly-0.19.jar"
+CONF_FILE = "conf/noPipelineToQueue.conf"
 INPUTS_FOLDER  = "/var/data/inputs/projects/"
 
 def main():
-    output = open("log/log_small_orchestrator.log", "a")
+    output = open("log/log_small_orchestrator2.log", "a")
     print "Starting small orchestrator"
     output.write("[%s]: Starting small orchestrator\n" % now())
     projects = [1,2,3,4,5,8,9,10]
     today = date.today()
-    yesterday = today - timedelta(1)
+    yesterday = today - timedelta(3)
     datestr = yesterday.strftime("%Y-%m-%d")
     for project in projects:
         directory = "%s%s/%s/twitter/" % (INPUTS_FOLDER, datestr, project)
