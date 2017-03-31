@@ -47,9 +47,7 @@ class StringGeneratorWebService(object):
     def POST(self):
         doc = cherrypy.request.json
         rc = RedisClient(redis_conf["host"], redis_conf["port"], redis_conf["db"], redis_conf["collection"])
-        print("Doc:'%s'" % doc)
         dumped_doc = json.dumps(doc)
-        print("Dumped doc: '%s'" % doc)
         rc.put(dumped_doc)
         return {"received doc": dumped_doc}
 
