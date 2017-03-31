@@ -2,7 +2,7 @@
 import glob, os
 import subprocess
 from datetime import date, timedelta,datetime
-JAR_FILE = "MixedEmotionsOrchestrator-assembly-0.19.jar"
+JAR_FILE = "MixedEmotionsOrchestrator-assembly-1.0.jar"
 CONF_FILE = "conf/noPipelineToQueue.conf"
 INPUTS_FOLDER  = "/var/data/inputs/projects/"
 

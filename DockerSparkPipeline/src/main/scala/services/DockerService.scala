@@ -29,7 +29,7 @@ extends Serializable{
     val bodyContent = if(bodyKey.length>0) input(bodyKey).toString else ""
     val response = RequestExecutor.executeRequest(method, url, body=bodyContent, requestDelay = requestDelayMs, requestTimeout = requestTimeoutMs)
     //??? The response might be a single string or an array, not always a map
-    val selectedResult = JsonPathsTraversor.getJsonPath(responsePath, response).getOrElse(List(0))
+    val selectedResult = JsonPathsTraversor.getJsonPath(responsePath, response).getOrElse(List())
     val result = input + ((outputField,selectedResult))
     result
 

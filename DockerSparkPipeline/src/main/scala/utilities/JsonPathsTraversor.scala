@@ -2,6 +2,7 @@ package utilities
 
 import org.json4s._
 import org.json4s.jackson.JsonMethods._
+import org.json4s.JsonAST.JNumber
 
 import scala.util.parsing.json.JSON
 
@@ -45,7 +46,8 @@ object JsonPathsTraversor {
 
   def jacksonPath(path:String, jObject: JValue): JValue = {
     val pathParts = path.split("\\.")
-    val key = pathParts.head
+    //Messing around with dots...
+    val key = pathParts.head.replaceAll("_DOT_",".")
     if(key.equals("")) {
       jObject
     } else {
@@ -61,12 +63,19 @@ object JsonPathsTraversor {
       val values = jResult.children.map(x=>compact(render(x)))
 
       JSON.parseFull(s"[${values.mkString(",")}]")
-    }else if(jResult.isInstanceOf[JString]){
+    }else if(jResult.isInstanceOf[JString]) {
+      JSON.parseFull(s"[${compact(jResult)}]")
+    }else if(jResult.isInstanceOf[JNumber]) {
       JSON.parseFull(s"[${compact(jResult)}]")
     }else {
       JSON.parseFull(compact(jResult))
+
     }
 
+  }
+
+  def getJsonMapPath(mapPath: Map[String, String], jsonString: String): Map[String,Option[Any]] = {
+    mapPath.mapValues(value=>getJsonPath(value, jsonString))
   }
 
 

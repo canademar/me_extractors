@@ -373,10 +373,30 @@ val jsonString = """{
     }
   }
 
+  "Parsing json with a complex path that includes colon" should "return the expected item" in {
+    assertResult(Some(List("http://gsi.dit.upm.es/ontologies/wnaffect/ns#sadness"))){
+      JsonPathsTraversor.getJsonPath("entries.emotions.onyx:hasEmotion.onyx:hasEmotionCategory", jsonString3)
+    }
+  }
+
+  "Parsing json with a path that includes _DOT_" should "return the expected item" in {
+    assertResult(Some(List(5.75))) {
+      JsonPathsTraversor.getJsonPath("entries.emotions.onyx:hasEmotion.http://www_DOT_gsi_DOT_dit_DOT_upm_DOT_es/ontologies/onyx/vocabularies/anew/ns#arousal", jsonString3)
+    }
+  }
+
+  "Using getJsonMap" should "return a map with the defined keys and the expected values" in {
+    assertResult(Map("arousal"->Some(List(5.75)), "emotion"->Some(List("http://gsi.dit.upm.es/ontologies/wnaffect/ns#sadness")))) {
+      JsonPathsTraversor.getJsonMapPath(Map("arousal"->"entries.emotions.onyx:hasEmotion.http://www_DOT_gsi_DOT_dit_DOT_upm_DOT_es/ontologies/onyx/vocabularies/anew/ns#arousal",
+      "emotion"->"entries.emotions.onyx:hasEmotion.onyx:hasEmotionCategory"),jsonString3)
+    }
+  }
 
 
 
 
 
 
-}
+
+
+  }
