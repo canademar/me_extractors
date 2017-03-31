@@ -1,0 +1,16 @@
+{
+  "id": "elasticpersistor",
+  "cpus": 0.5,
+  "mem": 256.0,
+  "instances": 2,
+  "container": {
+    "type": "DOCKER",
+    "docker": {
+      "image": "cnavarroparadigma/elastic_indexer",
+      "network": "BRIDGE",
+      "portMappings": [
+        { "containerPort": 9902, "hostPort": 0, "servicePort": 0, "protocol": "tcp" }
+      ]
+    }
+  }
+}

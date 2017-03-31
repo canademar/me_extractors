@@ -1,0 +1,36 @@
+{"mappings": 
+    {"video_review": 
+         {"properties": 
+               {
+                "indextime": {"type": "date","format":"yyyyMMddHHmmss"},
+                "project_name": {"type":"string", "index": "not_analyzed"},
+                "emotions_aggregated":
+                         {"properties":
+                             {
+                               "arousal": {"type":"float"},
+                               "valence": {"type":"float"},
+                               "disgust": {"type":"float"},
+                               "surprise": {"type":"float"},
+                               "joy": {"type":"float"},
+                               "anger": {"type":"float"},
+                               "fear": {"type":"float"},
+                               "sadness": {"type":"float"}
+                            }
+                         },
+                "video":
+                         {"properties":
+                             { 
+                             "channelTitle": {"type":"string", "index": "not_analyzed"},
+                             "dislike_count": {"type":"integer"},
+                             "like_count": {"type":"integer"},
+                             "view_count": {"type":"integer"}
+                             }
+                         }
+
+               
+                      
+               } 
+               
+         }
+    }
+}
