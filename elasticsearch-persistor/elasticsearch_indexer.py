@@ -41,6 +41,7 @@ if __name__ =="__main__":
         selected_elastic_conf=json.loads(sys.argv[1])
     else:
         selected_elastic_conf=elastic_conf
+    print("Selected elastic conf: %s " % selected_elastic_conf)
     while(True):
         print("Persisting")
         persist_redis(redis_conf, selected_elastic_conf)
