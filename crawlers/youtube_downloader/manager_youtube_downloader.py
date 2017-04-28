@@ -33,6 +33,7 @@ def download_video(project, video_info, video_date):
 
 
 def download_videos(project, video_infos):
+    print("Downloading videos!!!!")
     for video_info in video_infos['videos'][:4]:
         download_video(project, video_info, video_infos['date'])
 
@@ -41,7 +42,7 @@ def download_videos(project, video_infos):
 def search_videos(project, search_date):
     keyword=project['name']
     project_id=project['id']
-    command = "%s youtube_downloader.py --search=%s --date=%s" % (PYTHON_PATH, keyword, search_date)
+    command = "%s youtube_downloader.py --search='%s+review' --date=%s" % (PYTHON_PATH, keyword, search_date)
     print "Searching with: '%s'" % command
     result = subprocess.check_output(command.split(" "))
     output_dir = SEARCH_DIR % (search_date.replace("T00:00:00Z",""), project_id)

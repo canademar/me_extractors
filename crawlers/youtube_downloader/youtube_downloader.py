@@ -197,9 +197,14 @@ def videoID_download(videoId, service, json_dictionary, args):
         video_dictionary['channelId'] = rating['snippet']['channelId']
         video_dictionary['publishedAt'] = rating['snippet']['publishedAt']
         video_dictionary['channelTitle'] = rating['snippet']['channelTitle']
-        video_dictionary['view_count'] = rating['statistics']['viewCount']
-        video_dictionary['like_count'] = rating['statistics']['likeCount'] if 'likeCount' in rating['statistics'] else -1
-        video_dictionary['dislike_count'] = rating['statistics']['dislikeCount'] if 'dislikeCount' in rating['statistics'] else -1
+        if 'statistics' in rating:
+            video_dictionary['view_count'] = rating['statistics']['viewCount']
+            video_dictionary['like_count'] = rating['statistics']['likeCount'] if 'likeCount' in rating['statistics'] else -1
+            video_dictionary['dislike_count'] = rating['statistics']['dislikeCount'] if 'dislikeCount' in rating['statistics'] else -1
+        else:
+            video_dictionary['view_count'] = -1
+            video_dictionary['like_count'] = -1
+            video_dictionary['dislike_count'] = -1
 
     
     json_dictionary['video'].append(video_dictionary)
@@ -258,9 +263,14 @@ def search_video( service, json_dictionary, date, args):
                     exit(1)
                 #iterating over rating details of video
                 for rating in rating_list['items']:
-                    video_dictionary['view_count'] = rating['statistics']['viewCount']
-                    video_dictionary['like_count'] = rating['statistics']['likeCount'] if 'likeCount' in rating['statistics'] else -1
-                    video_dictionary['dislike_count'] = rating['statistics']['dislikeCount'] if 'dislikeCount' in rating['statistics'] else -1
+                    if 'statistics' in rating:
+                        video_dictionary['view_count'] = rating['statistics']['viewCount']
+                        video_dictionary['like_count'] = rating['statistics']['likeCount'] if 'likeCount' in rating['statistics'] else -1
+                        video_dictionary['dislike_count'] = rating['statistics']['dislikeCount'] if 'dislikeCount' in rating['statistics'] else -1
+                    else:
+                       video_dictionary['view_count']   = -1 
+                       video_dictionary['like_count']   = -1  
+                       video_dictionary['dislike_count']= -1
                 #calling function that collects all comments of an activity
                 if args.withcomments:
                     video_dictionary['comments'] = list()
