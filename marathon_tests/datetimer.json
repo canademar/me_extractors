@@ -1,0 +1,16 @@
+{
+  "id": "datetimer",
+  "cpus": 0.5,
+  "mem": 512.0,
+  "instances": 1,
+  "container": {
+    "type": "DOCKER",
+    "docker": {
+      "image": "cnavarroparadigma/datetimer",
+      "network": "BRIDGE",
+      "portMappings": [
+        { "containerPort": 9902, "hostPort": 0, "servicePort": 0, "protocol": "tcp" }
+      ]
+    }
+  }
+}
