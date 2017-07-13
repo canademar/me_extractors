@@ -653,7 +653,10 @@ def download_video(videoId, fetchAllFormats, outputdir="/tmp/youtube_output/", o
     if fetchAllFormats:
         ydl_opts["format"] = "all"
     else:
-        ydl_opts["format"] = "worst"
+        
+        #Think this is where to change format
+        #ydl_opts["format"] = "worst"
+        ydl_opts["format"] ="best[width<=420][filesize<=?60M]"
          
 
     if quiet:
